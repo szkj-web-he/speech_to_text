@@ -1,0 +1,23 @@
+/*
+ * puhui font
+ */
+
+@font-face {
+    font-family: "alipuhui";
+    src: url("./font/Alibaba-PuHuiTi-Regular.ttf");
+    font-weight: 400;
+    font-display: swap;
+    font-stretch: normal;
+}
+
+@font-face {
+    font-family: "alipuhui";
+    src: url("./font/Alibaba-PuHuiTi-Medium.ttf");
+    font-weight: 500;
+    font-display: swap;
+    font-stretch: normal;
+}
+
+.font-puhui {
+    font-family: "alipuhui", sans-serif;
+}

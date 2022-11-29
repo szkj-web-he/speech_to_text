@@ -1,0 +1,54 @@
+@use "./normalize.scss" as *;
+
+$fontFamily: alipuhui, sans-serif;
+
+html,
+.wrapper,
+body,
+body > div:first-child {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.wrapper {
+    background-color: #fff;
+}
+
+.question {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-flow: row wrap;
+    width: 100%;
+    flex: 0 0 auto;
+    margin-bottom: 40px;
+}
+
+.questionContent {
+    color: #212121;
+    font-family: $fontFamily;
+    font-style: normal;
+    font-size: 20px;
+    line-height: 30px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    backdrop-filter: blur(2px);
+}
+
+.questionDes {
+    color: #757575;
+    font-family: $fontFamily;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 30px;
+    letter-spacing: 0.2px;
+}
+
+.main {
+    width: 100%;
+}
