@@ -8,11 +8,6 @@
 /** This section will include all the necessary dependence for this tsx file */
 import React, { Fragment, useEffect, useState } from "react";
 import { comms } from ".";
-import { Group } from "./Components/Group";
-import JumpWrap from "./Components/JumpWrap";
-import { Row } from "./Components/Row";
-import { ScrollComponent } from "./Components/Scroll";
-import { useMapOptions } from "./Hooks/useOptions";
 import Item from "./item";
 /* <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
 /* <------------------------------------ **** INTERFACE START **** ------------------------------------ */
@@ -22,13 +17,12 @@ import Item from "./item";
 const Temp: React.FC = () => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
-    const [options, isMobile] = useMapOptions();
 
     const [state, setState] = useState(() => {
         const arr = comms.config.options ?? [];
-        const data: Record<string, null | number> = {};
+        const data: Record<string, string> = {};
         for (let i = 0; i < arr.length; i++) {
-            data[arr[i].code] = null;
+            data[arr[i].code] = "";
         }
         return data;
     });
@@ -46,46 +40,30 @@ const Temp: React.FC = () => {
     /************* This section will include this component general function *************/
 
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
+    const cols = comms.config.options ?? [];
+
     return (
-        <JumpWrap className="mainScroll">
-            <ScrollComponent
-                hidden={{ y: true }}
-                className="horizontalScroll"
-                bodyClassName="horizontalScrollBody"
-            >
-                <div className={`main${isMobile ? " mobile" : ""}`}>
-                    {options.map((items, index) => {
-                        return (
-                            <Fragment key={index}>
-                                <Group index={index} className={isMobile ? "optionsRow" : ""}>
-                                    <Row>
-                                        {items.map((item) => {
-                                            return (
-                                                <Item
-                                                    data={{ ...item }}
-                                                    key={item.code}
-                                                    score={state[item.code] ?? 0}
-                                                    setScore={(res) => {
-                                                        setState((pre) => {
-                                                            const data = { ...pre };
-                                                            data[item.code] = res;
-                                                            return { ...data };
-                                                        });
-                                                    }}
-                                                    span={item.span as 1}
-                                                    mobileStatus={isMobile}
-                                                />
-                                            );
-                                        })}
-                                    </Row>
-                                </Group>
-                                {index < options.length - 1 && !isMobile && <div className="hr" />}
-                            </Fragment>
-                        );
-                    })}
-                </div>
-            </ScrollComponent>
-        </JumpWrap>
+        <div className={`main`}>
+            {cols.map((item, index) => {
+                return (
+                    <Fragment key={index}>
+                        <Item
+                            data={{ ...item }}
+                            isOnly={cols.length < 2}
+                            key={item.code}
+                            value={state[item.code]}
+                            setValue={(res) => {
+                                setState((pre) => {
+                                    const data = { ...pre };
+                                    data[item.code] = res;
+                                    return { ...data };
+                                });
+                            }}
+                        />
+                    </Fragment>
+                );
+            })}
+        </div>
     );
 };
 /* <------------------------------------ **** FUNCTION COMPONENT END **** ------------------------------------ */

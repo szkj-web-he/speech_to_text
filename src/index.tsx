@@ -6,6 +6,11 @@ import { ConfigYML, PluginComms } from "@possie-engine/dr-plugin-sdk";
 import Header from "./header";
 import MainContent from "./main";
 import { OptionProps } from "./type";
+import { ScrollComponent } from "./Components/Scroll";
+
+import vConsole from "vconsole";
+
+new vConsole();
 
 export const comms = new PluginComms({
     defaultConfig: new ConfigYML(),
@@ -34,10 +39,10 @@ const Main: React.FC = () => {
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
 
     return (
-        <div className="wrapper">
+        <ScrollComponent hidden={{ x: true }} className="wrapper">
             <Header />
             <MainContent />
-        </div>
+        </ScrollComponent>
     );
 };
 /* <------------------------------------ **** FUNCTION COMPONENT END **** ------------------------------------ */

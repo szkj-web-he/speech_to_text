@@ -23,8 +23,9 @@ const Temp: React.FC = () => {
     /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
     /************* This section will include this component general function *************/
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
+    const cols = comms.config.options ?? [];
     return (
-        <div className="question">
+        <div className={`question${cols.length < 2 ? " center" : ""}`}>
             <div
                 className="questionContent"
                 dangerouslySetInnerHTML={{
