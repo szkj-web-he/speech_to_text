@@ -5,7 +5,7 @@ interface MessageProps {
 
 self.onmessage = (e: MessageEvent<MessageProps>) => {
     switch (e.data.type) {
-        case "pending-":
+        case "pending":
             transform.transaction(e.data.buffer);
             break;
     }
@@ -15,7 +15,7 @@ const transform = {
     transaction(buffer: Float32Array) {
         const bufTo16kHz = transform.to16kHz(buffer);
         const bufTo16BitPCM = transform.to16BitPCM(bufTo16kHz);
-        self.postMessage({ buffer: bufTo16BitPCM });
+        self.postMessage({ buffer: bufTo16BitPCM, type: "transform" });
     },
     to16kHz(buffer: Float32Array) {
         const data = new Float32Array(buffer);

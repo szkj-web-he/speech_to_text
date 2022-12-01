@@ -98,6 +98,7 @@ export const DropdownBtn = forwardRef<HTMLDivElement, DropdownBtnProps>(
         const disableVal = useMemo(() => disable ?? gDisable, [disable, gDisable]);
 
         const setBtnIsClickFn = useRef(setBtnIsClick);
+
         /* <------------------------------------ **** STATE END **** ------------------------------------ */
         /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
         /************* This section will include this component parameter *************/

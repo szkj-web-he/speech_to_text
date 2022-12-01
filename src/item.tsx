@@ -6,15 +6,13 @@
  */
 /* <------------------------------------ **** DEPENDENCE IMPORT START **** ------------------------------------ */
 /** This section will include all the necessary dependence for this tsx file */
-import { useTouch } from "./Hooks/useTouch";
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { OptionProps } from "./type";
-import { Dropdown } from "./Components/Dropdown";
-import { DropdownBtn } from "./Components/DropdownBtn";
-import { DropdownContent } from "./Components/DropdownContent";
+import React, { useState } from "react";
 import Mike from "./Components/Icon/mikeIcon";
+import { useMediaDevices } from "./Hooks/useMediaDevices";
 import Timer from "./timer";
-import { getMediaDevicesRole } from "./getMediaDevices";
+import { OptionProps } from "./type";
+import { useRef } from "react";
+import { useEffect } from "react";
 
 /* 
 <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
@@ -46,13 +44,53 @@ const Temp: React.FC<TempProps> = ({ data, value, setValue, isOnly }) => {
     /************* This section will include this component HOOK function *************/
     const [start, setStart] = useState(false);
 
+    const textRef = useRef("");
+
+    const [loading, setLoading] = useState(false);
+
+    const fn = useMediaDevices(
+        () => {
+            setLoading(false);
+        },
+        (res) => {
+            textRef.current += res ?? "";
+            setValue(textRef.current);
+        },
+        () => {
+            setLoading(false);
+            setStart(false);
+        },
+    );
+
+    const ref = useRef<HTMLTextAreaElement | null>(null);
+
+    const focusStatus = useRef(false);
+
+    const inputVal = useRef<string>();
+
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
 
+    useEffect(() => {
+        if (ref.current) {
+            ref.current.value = value;
+        }
+    }, [value]);
+
     const handleStart = () => {
         setStart(true);
-        getMediaDevicesRole();
+        setLoading(true);
+        fn(true);
+        if (!focusStatus.current) {
+            ref.current?.focus();
+        }
+    };
+
+    const handleStop = () => {
+        setStart(false);
+        setLoading(false);
+        fn(false);
     };
 
     /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
@@ -63,51 +101,43 @@ const Temp: React.FC<TempProps> = ({ data, value, setValue, isOnly }) => {
     if (isOnly) {
         return (
             <div className={`item_isOnly`}>
-                <textarea className="iptContent" placeholder="请通过语音或打字输入..." />
+                <textarea
+                    className="iptContent"
+                    placeholder="请通过语音或打字输入..."
+                    ref={ref}
+                    onFocus={() => {
+                        focusStatus.current = true;
+                    }}
+                    onBlur={() => {
+                        focusStatus.current = false;
+                    }}
+                    onInput={(e) => {
+                        inputVal.current = e.currentTarget.value;
+                        console.log(document.getSelection()?.getRangeAt(0));
+                    }}
+                />
 
                 <div className="btnContainer">
-                    <Dropdown
-                        trigger={"hover"}
-                        triangle={{
-                            width: "9px",
-                            height: "4px",
-                            color: "rgba(33,33,33,0.8)",
-                        }}
-                        placement="ct"
-                        show={start ? false : undefined}
-                        delayOnShow={1000}
-                        disable={start}
+                    <div
+                        className="startBtn"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={handleStart}
+                        title="点击一下，用语音代替打字"
+                        style={start ? { display: "none" } : undefined}
                     >
-                        <DropdownBtn
-                            className="startBtn"
-                            onClick={handleStart}
-                            style={
-                                start
-                                    ? { opacity: 0, pointerEvents: "none", visibility: "hidden" }
-                                    : undefined
-                            }
-                        >
-                            <Mike className="btn_icon" />
-                        </DropdownBtn>
-                        <DropdownContent className="" bodyClassName="dropdownBody_content">
-                            点击一下，用语音代替打字
-                        </DropdownContent>
-                    </Dropdown>
+                        <Mike className="btn_icon" />
+                    </div>
 
                     <div
                         className="stopBtn"
-                        style={
-                            start
-                                ? undefined
-                                : { opacity: 0, pointerEvents: "none", visibility: "hidden" }
-                        }
+                        style={start ? undefined : { display: "none" }}
+                        onMouseDown={(e) => e.preventDefault()}
                     >
-                        <Timer
-                            status={start}
-                            handleClick={() => {
-                                setStart(false);
-                            }}
-                        />
+                        {loading ? (
+                            <div className="stopBtnLoading">loading···</div>
+                        ) : (
+                            <Timer status={start} handleClick={handleStop} />
+                        )}
                     </div>
                 </div>
             </div>

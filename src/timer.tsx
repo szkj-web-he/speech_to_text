@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import circle from "./Img/circle.png";
 
 interface TempProps {
     /**
@@ -44,6 +45,7 @@ const Temp: React.FC<TempProps> = ({ status, handleClick, style }) => {
 
     return (
         <div className="timer_wrap" onClick={handleClick} style={style}>
+            <img src={circle} className="timer_circle" alt="" />
             <div className="timer_value">{formatTime(count)}</div>
             <div className="timer_icon" />
         </div>
