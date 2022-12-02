@@ -10,6 +10,7 @@ interface LangData {
     st: {
         bg: string;
         ed: string;
+        type: "1" | "0";
         rt: Array<{
             ws: Array<{
                 cw: Array<{
@@ -37,10 +38,9 @@ const url = "rtasr.xfyun.cn/v1/ws";
  * @returns
  */
 export const useMediaDevices = (
-    handleStart: () => void,
-    handlePending: (text: string) => void,
+    handlePending: (data: { value: string; type: "0" | "1" }) => void,
     handleCancel: () => void,
-): ((status: boolean) => void) => {
+): [(status: boolean) => void, boolean, boolean] => {
     const params = useRef("");
 
     const [start, setStart] = useState(false);
@@ -48,16 +48,16 @@ export const useMediaDevices = (
     const mediaStreamRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const recorderRef = useRef<ScriptProcessorNode | null>(null);
     const contextRef = useRef<AudioContext | null>(null);
+    const tracksRef = useRef<Array<MediaStreamTrack> | null>(null);
 
     const bufferRef = useRef<Array<number>>([]);
 
-    const startFnRef = useRef(handleStart);
     const pendingFnRef = useRef(handlePending);
     const cancelFnRef = useRef(handleCancel);
 
-    useLayoutEffect(() => {
-        startFnRef.current = handleStart;
-    }, [handleStart]);
+    const [openLoading, setOpenLoading] = useState(false);
+    const [closeLoading, setCloseLoading] = useState(false);
+
     useLayoutEffect(() => {
         pendingFnRef.current = handlePending;
     }, [handlePending]);
@@ -112,6 +112,7 @@ export const useMediaDevices = (
             const fn = (
                 e: MessageEvent<{ type: "transform" | unknown; buffer: Array<number> }>,
             ) => {
+                console.log("message");
                 switch (e.data.type) {
                     case "transform":
                         bufferRef.current.push(...e.data.buffer);
@@ -156,14 +157,17 @@ export const useMediaDevices = (
              * 取消 连接
              */
             const cancelConnect = () => {
-                console.log("cancelConnect");
                 setStart(false);
-                contextRef.current?.close();
+                tracksRef.current?.forEach((item) => item.stop());
+
                 recorderRef.current?.disconnect();
                 mediaStreamRef.current?.disconnect();
+                contextRef.current?.close();
                 contextRef.current = null;
                 recorderRef.current = null;
+                tracksRef.current = null;
                 mediaStreamRef.current = null;
+                bufferRef.current = [];
                 state = 0;
                 timeoutStart && window.clearTimeout(timeoutStart);
                 handlerInterval && window.clearTimeout(handlerInterval);
@@ -215,9 +219,8 @@ export const useMediaDevices = (
 
                 const mapText = (data: LangData) => {
                     let str = "";
-                    console.log(data);
-                    const rts = data.st.rt;
 
+                    const rts = data.st.rt;
                     for (let i = 0; i < rts.length; i++) {
                         const wss = rts[i].ws;
                         for (let j = 0; j < wss.length; j++) {
@@ -227,7 +230,11 @@ export const useMediaDevices = (
                             }
                         }
                     }
-                    pendingFnRef.current(str);
+
+                    pendingFnRef.current({
+                        value: str,
+                        type: data.st.type,
+                    });
                 };
 
                 const fn = () => {
@@ -244,7 +251,6 @@ export const useMediaDevices = (
                         case "error":
                             state = 0;
                             cancelFnRef.current();
-                            console.log("出错了:", jsonData);
                             break;
                     }
                 };
@@ -293,16 +299,13 @@ export const useMediaDevices = (
             };
 
             ws.onerror = () => {
-                console.log("onerror");
                 ws.close();
                 cancelFnRef.current();
             };
             ws.onclose = () => {
-                console.log("onclose");
                 cancelConnect();
             };
             return () => {
-                console.log("return");
                 ws.close();
                 timeoutStart && window.clearTimeout(timeoutStart);
                 handlerInterval && window.clearInterval(handlerInterval);
@@ -312,17 +315,24 @@ export const useMediaDevices = (
 
     useEffect(() => {
         return () => {
-            contextRef.current?.close();
+            tracksRef.current?.forEach((item) => item.stop());
             recorderRef.current?.disconnect();
             mediaStreamRef.current?.disconnect();
+
+            contextRef.current?.close();
+            bufferRef.current = [];
+            tracksRef.current = null;
             contextRef.current = null;
             recorderRef.current = null;
             mediaStreamRef.current = null;
         };
     }, []);
 
-    return useCallback((status: boolean) => {
+    const fn = useCallback((status: boolean) => {
+        console.log("status", status);
         if (status) {
+            setOpenLoading(true);
+
             navigator.mediaDevices
                 .getUserMedia({
                     audio: true,
@@ -330,7 +340,7 @@ export const useMediaDevices = (
                 })
                 .then((stream) => {
                     setStart(true);
-
+                    tracksRef.current = stream.getTracks();
                     const context = (contextRef.current = new AudioContext());
 
                     const mediaStream = (mediaStreamRef.current =
@@ -338,7 +348,6 @@ export const useMediaDevices = (
                     const recorder = (recorderRef.current = context.createScriptProcessor(0, 1, 1));
                     mediaStream.connect(recorder);
                     recorder.connect(context.destination);
-                    startFnRef.current();
                     recorder.onaudioprocess = (e) => {
                         recorderWorker.postMessage({
                             type: "pending",
@@ -349,15 +358,40 @@ export const useMediaDevices = (
                 .catch(() => {
                     alert("请求麦克风失败");
                     setStart(false);
-                    contextRef.current?.close();
+                    tracksRef.current?.forEach((item) => item.stop());
                     mediaStreamRef.current?.disconnect();
                     recorderRef.current?.disconnect();
+                    contextRef.current?.close();
                     contextRef.current = null;
+                    tracksRef.current = null;
+                    bufferRef.current = [];
                     mediaStreamRef.current = null;
                     recorderRef.current = null;
+                })
+                .finally(() => {
+                    setOpenLoading(false);
                 });
-        } else {
-            setStart(false);
+            return;
         }
+        if (contextRef.current) {
+            setCloseLoading(true);
+        } else {
+            setCloseLoading(false);
+        }
+
+        setStart(false);
+
+        tracksRef.current?.forEach((item) => item.stop());
+        recorderRef.current?.disconnect();
+        mediaStreamRef.current?.disconnect();
+        contextRef.current?.close().then(() => {
+            setCloseLoading(false);
+        });
+        contextRef.current = null;
+        bufferRef.current = [];
+        tracksRef.current = null;
+        recorderRef.current = null;
+        mediaStreamRef.current = null;
     }, []);
+    return [fn, openLoading, closeLoading];
 };

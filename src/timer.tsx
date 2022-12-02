@@ -33,9 +33,10 @@ const Temp: React.FC<TempProps> = ({ status, handleClick, style }) => {
     const [count, setCount] = useState(0);
 
     useEffect(() => {
+        let i = 0;
         if (status) {
             const timer = window.setInterval(() => {
-                setCount((pre) => ++pre);
+                setCount(i++);
             }, 1000);
             return () => {
                 timer && window.clearInterval(timer);

@@ -51,7 +51,7 @@ const Temp: React.FC = () => {
                             data={{ ...item }}
                             isOnly={cols.length < 2}
                             key={item.code}
-                            value={state[item.code]}
+                            defaultValue={state[item.code]}
                             setValue={(res) => {
                                 setState((pre) => {
                                     const data = { ...pre };

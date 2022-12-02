@@ -6,13 +6,11 @@
  */
 /* <------------------------------------ **** DEPENDENCE IMPORT START **** ------------------------------------ */
 /** This section will include all the necessary dependence for this tsx file */
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Mike from "./Components/Icon/mikeIcon";
 import { useMediaDevices } from "./Hooks/useMediaDevices";
 import Timer from "./timer";
 import { OptionProps } from "./type";
-import { useRef } from "react";
-import { useEffect } from "react";
 
 /* 
 <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
@@ -26,7 +24,7 @@ interface TempProps {
     /**
      * value
      */
-    value: string;
+    defaultValue: string;
     /**
      * value改变
      */
@@ -39,25 +37,55 @@ interface TempProps {
 }
 /* <------------------------------------ **** INTERFACE END **** ------------------------------------ */
 /* <------------------------------------ **** FUNCTION COMPONENT START **** ------------------------------------ */
-const Temp: React.FC<TempProps> = ({ data, value, setValue, isOnly }) => {
+const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
     const [start, setStart] = useState(false);
 
-    const textRef = useRef("");
+    const messageData = useRef<{ value: string; start: number }>();
 
-    const [loading, setLoading] = useState(false);
+    const timer = useRef<number>();
 
-    const fn = useMediaDevices(
-        () => {
-            setLoading(false);
-        },
+    const [fn, openLoading, closeLoading] = useMediaDevices(
         (res) => {
-            textRef.current += res ?? "";
-            setValue(textRef.current);
+            const node = ref.current;
+            if (!node) {
+                return;
+            }
+            let msgData = messageData.current ? { ...messageData.current } : undefined;
+
+            const value = node.value;
+            const valArr = value.split("");
+
+            const rangeStart = node.selectionStart;
+            const rangeEnd = node.selectionEnd;
+            let point = 0;
+
+            if (msgData) {
+                valArr.splice(msgData.start, msgData.value.length, res.value);
+                point = msgData.start + res.value.length;
+            } else {
+                if (rangeStart === rangeEnd) {
+                    valArr.splice(rangeStart, 0, res.value);
+                } else {
+                    valArr.splice(rangeStart, rangeEnd - rangeStart, res.value);
+                }
+                point = rangeStart + res.value.length;
+            }
+
+            if (res.type === "1") {
+                msgData = { start: msgData?.start ?? rangeStart, value: res.value };
+            } else {
+                msgData = undefined;
+            }
+
+            messageData.current = msgData;
+            node.value = valArr.join("");
+
+            node.setSelectionRange(point, point);
+            setValue(node.value);
         },
         () => {
-            setLoading(false);
             setStart(false);
         },
     );
@@ -72,15 +100,8 @@ const Temp: React.FC<TempProps> = ({ data, value, setValue, isOnly }) => {
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
 
-    useEffect(() => {
-        if (ref.current) {
-            ref.current.value = value;
-        }
-    }, [value]);
-
     const handleStart = () => {
         setStart(true);
-        setLoading(true);
         fn(true);
         if (!focusStatus.current) {
             ref.current?.focus();
@@ -88,32 +109,56 @@ const Temp: React.FC<TempProps> = ({ data, value, setValue, isOnly }) => {
     };
 
     const handleStop = () => {
-        setStart(false);
-        setLoading(false);
-        fn(false);
+        if (start === true) {
+            setStart(false);
+            fn(false);
+        }
     };
 
     /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
     /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
     /************* This section will include this component general function *************/
 
+    useEffect(() => {
+        return () => {
+            if (timer.current) {
+                window.clearTimeout(timer.current);
+            }
+        };
+    }, []);
+
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
-    if (isOnly) {
-        return (
-            <div className={`item_isOnly`}>
+
+    return (
+        <div className={"item"}>
+            {isOnly ? undefined : (
+                <div
+                    className="item_head"
+                    dangerouslySetInnerHTML={{
+                        __html: data.content,
+                    }}
+                />
+            )}
+            <div className={isOnly ? "item_col" : "item_row"}>
                 <textarea
                     className="iptContent"
                     placeholder="请通过语音或打字输入..."
                     ref={ref}
+                    defaultValue={defaultValue}
                     onFocus={() => {
                         focusStatus.current = true;
                     }}
-                    onBlur={() => {
+                    onBlur={(e) => {
                         focusStatus.current = false;
+                        setValue(e.currentTarget.value);
                     }}
                     onInput={(e) => {
+                        timer.current && window.clearTimeout(timer.current);
                         inputVal.current = e.currentTarget.value;
-                        console.log(document.getSelection()?.getRangeAt(0));
+                        timer.current = window.setTimeout(() => {
+                            timer.current = undefined;
+                            setValue(e.currentTarget.value);
+                        });
                     }}
                 />
 
@@ -123,28 +168,34 @@ const Temp: React.FC<TempProps> = ({ data, value, setValue, isOnly }) => {
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={handleStart}
                         title="点击一下，用语音代替打字"
-                        style={start ? { display: "none" } : undefined}
+                        style={
+                            !start && !openLoading && !closeLoading
+                                ? undefined
+                                : { display: "none" }
+                        }
                     >
                         <Mike className="btn_icon" />
+                    </div>
+                    <div
+                        className="btn_loading"
+                        style={openLoading || closeLoading ? undefined : { display: "none" }}
+                    >
+                        loading···
                     </div>
 
                     <div
                         className="stopBtn"
-                        style={start ? undefined : { display: "none" }}
+                        style={
+                            start && !openLoading && !closeLoading ? undefined : { display: "none" }
+                        }
                         onMouseDown={(e) => e.preventDefault()}
                     >
-                        {loading ? (
-                            <div className="stopBtnLoading">loading···</div>
-                        ) : (
-                            <Timer status={start} handleClick={handleStop} />
-                        )}
+                        <Timer status={start} handleClick={handleStop} />
                     </div>
                 </div>
             </div>
-        );
-    }
-
-    return <div className={`item`}></div>;
+        </div>
+    );
 };
 /* <------------------------------------ **** FUNCTION COMPONENT END **** ------------------------------------ */
 export default Temp;

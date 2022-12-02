@@ -2,6 +2,12 @@
 
 $fontFamily: alipuhui, sans-serif;
 
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
 html,
 .wrapper,
 body,
@@ -30,7 +36,7 @@ body > div:first-child {
         width: 620px;
         justify-content: center;
         text-align: center;
-        max-width: calc(100% - 40px);
+        max-width: 100%;
         margin: 0 auto 32px auto;
     }
 }
@@ -60,21 +66,42 @@ body > div:first-child {
     width: 100%;
 }
 
-.item_isOnly {
+.item_head {
+    font-family: $fontFamily;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.2px;
+    color: #4d4d4d;
+    margin-bottom: 8px;
+}
+
+.iptContent {
+    border: 1px solid #ebebeb;
+    border-radius: 6px;
+    transition: all 0.1s linear;
+    padding: 12px 16px;
+    width: 600px;
+    &:focus {
+        border: 1px solid #22a6b3;
+        box-shadow: 0 0 1px 0 #3cbbc7;
+    }
+}
+
+.item {
+    margin-bottom: 24px;
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.item_col {
     .iptContent {
-        width: 600px;
         height: 120px;
-        border: 1px solid #ebebeb;
-        border-radius: 6px;
-        transition: all 0.1s linear;
         margin: 0 auto;
-        max-width: calc(100% - 40px);
         display: block;
-        padding: 12px 16px;
-        &:focus {
-            border: 1px solid #22a6b3;
-            box-shadow: 0 0 1px 0 #3cbbc7;
-        }
+        max-width: 100%;
     }
 
     .btnContainer {
@@ -96,10 +123,8 @@ body > div:first-child {
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        left: 0;
-        right: 0;
+        position: relative;
         margin: 0 auto;
-        position: absolute;
         &::after {
             content: "";
             position: absolute;
@@ -134,10 +159,58 @@ body > div:first-child {
         width: 80px;
         height: 80px;
         margin: 0 auto;
-        position: absolute;
-        left: 0;
-        right: 0;
         cursor: pointer;
+    }
+}
+
+.item_row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-flow: row nowrap;
+
+    .iptContent {
+        height: 80px;
+    }
+
+    .btnContainer {
+        width: 48px;
+        height: 48px;
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        flex-flow: row nowrap;
+        margin-left: 24px;
+    }
+
+    .startBtn {
+        width: 100%;
+        height: 100%;
+        background: #ffffff;
+        box-shadow: 0px 2px 8px rgba(26, 26, 26, 0.08), 0px 2px 4px rgba(26, 26, 26, 0.03);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-flow: row nowrap;
+        cursor: pointer;
+    }
+
+    .btn_icon {
+        color: #3cbbc7;
+        font-size: 20px;
+    }
+
+    .stopBtn {
+        width: 100%;
+        height: 100%;
+    }
+
+    .timer_icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
     }
 }
 
@@ -222,13 +295,16 @@ body > div:first-child {
     right: 0;
 }
 
-.stopBtnLoading {
-    width: 100%;
-    height: 100%;
-    display: flex;
+.btn_loading {
+    width: 80px;
+    height: 80px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-flow: row nowrap;
+    font-family: $fontFamily;
+    font-size: 14px;
+    line-height: 20px;
 }
 
 @keyframes roller {
