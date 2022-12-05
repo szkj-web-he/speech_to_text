@@ -5,7 +5,7 @@ instruction: ""
 # For the purposes of reproducing a bug
 options: [
         { "code": "1", "content": "优点：" },
-        { "code": "2", "content": "缺点：" },
+        # { "code": "2", "content": "缺点：" },
         # { "code": "3", "content": "长裤" },
         # { "code": "4", "content": "运动鞋" },
         # { "code": "5", "content": "外套" },

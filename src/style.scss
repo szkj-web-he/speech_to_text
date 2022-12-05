@@ -111,6 +111,7 @@ body > div:first-child {
         justify-content: center;
         flex-flow: row nowrap;
         margin-top: 48px;
+        position: relative;
     }
 
     .startBtn {
@@ -123,7 +124,7 @@ body > div:first-child {
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        position: relative;
+        position: absolute;
         margin: 0 auto;
         &::after {
             content: "";
@@ -182,6 +183,7 @@ body > div:first-child {
         justify-content: center;
         flex-flow: row nowrap;
         margin-left: 24px;
+        position: relative;
     }
 
     .startBtn {
@@ -195,6 +197,7 @@ body > div:first-child {
         justify-content: center;
         flex-flow: row nowrap;
         cursor: pointer;
+        position: absolute;
     }
 
     .btn_icon {

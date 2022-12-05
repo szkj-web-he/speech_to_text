@@ -367,6 +367,7 @@ export const useMediaDevices = (
                     bufferRef.current = [];
                     mediaStreamRef.current = null;
                     recorderRef.current = null;
+                    cancelFnRef.current();
                 })
                 .finally(() => {
                     setOpenLoading(false);
