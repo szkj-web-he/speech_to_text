@@ -19,7 +19,7 @@ export const comms = new PluginComms({
         question?: string;
         instruction?: string;
         optionsInstruction?: string;
-        options?: Array<OptionProps>;
+        options?: Array<Array<OptionProps>>;
     };
     state: unknown;
     renderOnReady: (res: React.ReactNode) => void;
