@@ -7,7 +7,11 @@
 /* <------------------------------------ **** DEPENDENCE IMPORT START **** ------------------------------------ */
 /** This section will include all the necessary dependence for this tsx file */
 import React, { useEffect, useRef, useState } from "react";
+import { Dropdown } from "./Components/Dropdown";
+import { DropdownBtn } from "./Components/DropdownBtn";
+import { DropdownContent } from "./Components/DropdownContent";
 import Mike from "./Components/Icon/mikeIcon";
+import { useMobile } from "./Components/Scroll/Unit/useMobile";
 import { useMediaDevices } from "./Hooks/useMediaDevices";
 import Timer from "./timer";
 import { OptionProps } from "./type";
@@ -90,6 +94,8 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
         },
     );
 
+    const mobileStatus = useMobile();
+
     const ref = useRef<HTMLTextAreaElement | null>(null);
 
     const focusStatus = useRef(false);
@@ -163,19 +169,33 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                 />
 
                 <div className="btnContainer">
-                    <div
-                        className="startBtn"
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={handleStart}
-                        title="点击一下，用语音代替打字"
-                        style={
-                            !start && !openLoading && !closeLoading
-                                ? undefined
-                                : { display: "none" }
-                        }
+                    <Dropdown
+                        delayOnShow={1000}
+                        trigger={"hover"}
+                        disable={start || openLoading || closeLoading || mobileStatus}
+                        placement="ct"
+                        triangle={{
+                            width: "9px",
+                            height: "4px",
+                            color: "rgba(33,33,33,0.8)",
+                        }}
                     >
-                        <Mike className="btn_icon" />
-                    </div>
+                        <DropdownBtn
+                            className="startBtn"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={handleStart}
+                            style={
+                                !start && !openLoading && !closeLoading
+                                    ? undefined
+                                    : { opacity: "0" }
+                            }
+                        >
+                            <Mike className="btn_icon" />
+                        </DropdownBtn>
+                        <DropdownContent bodyClassName="dropdownBody_content">
+                            点击一下，用语音代替打字
+                        </DropdownContent>
+                    </Dropdown>
                     <div
                         className="btn_loading"
                         style={openLoading || closeLoading ? undefined : { display: "none" }}

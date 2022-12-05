@@ -307,6 +307,24 @@ body > div:first-child {
     line-height: 20px;
 }
 
+.group_hr {
+    background: #f9fbfb;
+    height: 32px;
+    width: 100%;
+    margin: 48px 0;
+}
+
+.row_head {
+    font-family: $fontFamily;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: 0.2px;
+    color: #212121;
+    margin-bottom: 24px;
+}
+
 @keyframes roller {
     0% {
         transform: rotate(0deg);

@@ -28,20 +28,12 @@ export const getElements = (id: string): HTMLElement[] => {
 };
 
 /**
- *
- * @param ref
- * @param id
- * @returns
+ * 第一个node界定啊的top距离和第二个node节点的top距离之前的差值
  */
-
-export const findParent = (el: HTMLElement, parent: HTMLElement): number => {
-    let p = el.parentElement;
-    let top = el.offsetTop;
-    while (p !== parent) {
-        top += p?.offsetTop ?? 0;
-        p = p?.parentElement ?? null;
-    }
-    return top;
+export const sameTop = (el: HTMLElement, parent: HTMLElement): number => {
+    const elRect = el.getBoundingClientRect();
+    const parentRect = parent.getBoundingClientRect();
+    return elRect.top - parentRect.top;
 };
 
 export const useActiveStatus = (
@@ -66,24 +58,15 @@ export const useActiveStatus = (
         }
 
         const arr = getElements(id);
-
         let n = -1;
-        const scrollTop = scrollBody?.scrollTop ?? 0;
         for (let i = 0; i < arr.length; ) {
             const item = arr[i];
-            const top = findParent(item, scrollBody);
+            const marginTop = sameTop(item, scrollBody);
 
-            if (i === arr.length - 1) {
-                if (top + item.offsetHeight > scrollTop) {
-                    n = i;
-                    i = arr.length;
-                } else {
-                    ++i;
-                }
-            } else if (top >= scrollTop) {
+            if (marginTop > -5) {
                 n = i;
                 i = arr.length;
-            } else {
+            } else if (marginTop < 0) {
                 ++i;
             }
         }
@@ -97,7 +80,8 @@ export const useActiveStatus = (
         activeIndex.current = n;
         setTopActive(n > 0);
         setBottomActive(n < arr.length - 1);
-    }, [id, ref]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
 
     useEffect(() => {
         update();

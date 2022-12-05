@@ -72,6 +72,7 @@ export const DropdownBtn = forwardRef<HTMLDivElement, DropdownBtnProps>(
             onMouseUp,
             clickId,
             contextmenuId,
+            style,
             ...props
         },
         ref,
@@ -98,6 +99,11 @@ export const DropdownBtn = forwardRef<HTMLDivElement, DropdownBtnProps>(
         const disableVal = useMemo(() => disable ?? gDisable, [disable, gDisable]);
 
         const setBtnIsClickFn = useRef(setBtnIsClick);
+
+        /**
+         * 是否hover
+         */
+        const isHover = useRef(false);
 
         /* <------------------------------------ **** STATE END **** ------------------------------------ */
         /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
@@ -132,6 +138,25 @@ export const DropdownBtn = forwardRef<HTMLDivElement, DropdownBtnProps>(
             });
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [clickId, contextmenuId, triggerValue, disableVal, eventName, id]);
+
+        useLayoutEffect(() => {
+            /**
+             * 新事件没有hover
+             */
+            const isNotHover =
+                triggerValue !== "hover" || !triggerValue.includes("hover") || disableVal;
+            if (isNotHover && isHover.current) {
+                const event = new CustomEvent(eventName, {
+                    detail: {
+                        event: "mouseleave",
+                        id,
+                        eventId: hoverId,
+                    },
+                });
+                document.dispatchEvent(event);
+                isHover.current = false;
+            }
+        }, [eventName, hoverId, id, triggerValue, disableVal]);
 
         /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
         /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
@@ -185,6 +210,7 @@ export const DropdownBtn = forwardRef<HTMLDivElement, DropdownBtnProps>(
                     },
                 });
                 document.dispatchEvent(event);
+                isHover.current = true;
             }
         };
 
@@ -213,6 +239,7 @@ export const DropdownBtn = forwardRef<HTMLDivElement, DropdownBtnProps>(
                     },
                 });
                 document.dispatchEvent(event);
+                isHover.current = false;
             }
         };
 
@@ -337,12 +364,24 @@ export const DropdownBtn = forwardRef<HTMLDivElement, DropdownBtnProps>(
                     handleBlur();
                 }}
                 tabIndex={
-                    triggerValue === "focus" || triggerValue?.includes("focus") ? -1 : undefined
+                    (triggerValue === "focus" || triggerValue?.includes("focus")) && !disableVal
+                        ? -1
+                        : undefined
                 }
                 onContextMenu={(e) => {
                     onContextMenu?.(e);
                     handleContextMenu(e);
                 }}
+                style={
+                    disableVal
+                        ? {
+                              ...style,
+                              pointerEvents: "none",
+                          }
+                        : {
+                              ...style,
+                          }
+                }
                 {...props}
             >
                 {children}

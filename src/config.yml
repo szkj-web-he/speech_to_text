@@ -8,6 +8,11 @@ options:
         [
             { "code": "1", "content": "对于plugin,有什么想说的吗?" },
             { "code": "2", "content": "对于qeditor,有什么想说的吗" },
+            { "code": "3", "content": "对于market,有什么想说的吗" },
+            { "code": "4", "content": "对于community,有什么想说的吗" },
+            { "code": "5", "content": "对于组件库,有什么想说的吗" },
+            { "code": "6", "content": "对于profile,有什么想说的吗" },
+            { "code": "7", "content": "对于project manage,有什么想说的吗" },
         ],
         [{ "code": "a", "content": "优点：" }, { "code": "b", "content": "缺点：" }],
     ]

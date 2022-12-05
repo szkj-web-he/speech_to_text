@@ -6,7 +6,7 @@ import { ConfigYML, PluginComms } from "@possie-engine/dr-plugin-sdk";
 import Header from "./header";
 import MainContent from "./main";
 import { OptionProps } from "./type";
-import { ScrollComponent } from "./Components/Scroll";
+import JumpWrap from "./Components/JumpWrap";
 
 // import vConsole from "vconsole";
 
@@ -66,10 +66,10 @@ const Main: React.FC = () => {
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */
     if (ready) {
         return (
-            <ScrollComponent hidden={{ x: true }} className="wrapper">
+            <JumpWrap hidden={{ x: true }} className="wrapper">
                 <Header />
                 <MainContent />
-            </ScrollComponent>
+            </JumpWrap>
         );
     }
     return <></>;

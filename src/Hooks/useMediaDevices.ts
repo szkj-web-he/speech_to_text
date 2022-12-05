@@ -112,7 +112,6 @@ export const useMediaDevices = (
             const fn = (
                 e: MessageEvent<{ type: "transform" | unknown; buffer: Array<number> }>,
             ) => {
-                console.log("message");
                 switch (e.data.type) {
                     case "transform":
                         bufferRef.current.push(...e.data.buffer);
@@ -329,7 +328,6 @@ export const useMediaDevices = (
     }, []);
 
     const fn = useCallback((status: boolean) => {
-        console.log("status", status);
         if (status) {
             setOpenLoading(true);
 

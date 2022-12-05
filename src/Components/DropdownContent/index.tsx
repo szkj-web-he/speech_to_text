@@ -66,7 +66,7 @@ export const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
             onBlur,
             handleVisibleChange,
             eventId,
-
+            style,
             children,
             ...props
         },
@@ -132,6 +132,10 @@ export const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
             triggerVal,
             disableVal,
         );
+        /**
+         * 是否Hover中
+         */
+        const isHover = useRef(false);
 
         /**
          * 监听 局部的show和全局的show
@@ -281,6 +285,21 @@ export const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
             // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
+        useLayoutEffect(() => {
+            /**
+             * 新事件没有hover
+             */
+            const isNotHover =
+                triggerVal !== "hover" || !triggerVal.includes("hover") || disableVal;
+            if (isNotHover && isHover.current) {
+                void hoverFnRef.current({
+                    type: ActionType.UpdateContentAction,
+                    payload: hoverFnParams(false),
+                });
+                isHover.current = false;
+            }
+        }, [disableVal, triggerVal]);
+
         /**
          * use hover dispatch的callback
          * @param status
@@ -340,6 +359,7 @@ export const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                     type: ActionType.UpdateContentAction,
                     payload: hoverFnParams(true),
                 });
+                isHover.current = true;
             }
         };
 
@@ -353,6 +373,7 @@ export const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                     type: ActionType.UpdateContentAction,
                     payload: hoverFnParams(false),
                 });
+                isHover.current = false;
             }
         };
 
@@ -425,6 +446,14 @@ export const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                     onBlur?.(e);
                     handleBlur();
                 }}
+                style={
+                    disableVal
+                        ? {
+                              ...style,
+                              pointerEvents: "none",
+                          }
+                        : { ...style }
+                }
                 {...props}
                 tabIndex={
                     (triggerVal === "focus" || triggerVal?.includes("focus")) && !disableVal
