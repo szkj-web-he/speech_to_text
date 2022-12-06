@@ -1,10 +1,9 @@
 /**
  * 获取媒体设备
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CustomNavigator } from "../type";
 const recorderWorker = new Worker(new URL("../video.worker.ts", import.meta.url));
-import { useLayoutEffect } from "react";
 
 interface LangData {
     st: {
@@ -365,6 +364,7 @@ export const useMediaDevices = (
                     bufferRef.current = [];
                     mediaStreamRef.current = null;
                     recorderRef.current = null;
+                    cancelFnRef.current();
                 })
                 .finally(() => {
                     setOpenLoading(false);
