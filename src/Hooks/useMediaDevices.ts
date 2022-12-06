@@ -1,10 +1,11 @@
 /**
  * 获取媒体设备
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { CustomNavigator } from "../type";
+
 const recorderWorker = new Worker(new URL("../video.worker.ts", import.meta.url));
-import { useLayoutEffect } from "react";
+import CryptoJS from "crypto-js";
 
 interface LangData {
     st: {
@@ -76,8 +77,8 @@ export const useMediaDevices = (
         const appId = "4a6a32c6";
         const secretKey = "ebbe49206100e5e36d6821e70704261f";
         const ts = Math.floor(new Date().getTime() / 1000).toString(); //new Date().getTime()/1000+'';
-        const signa = hex_md5(appId + ts);
-        const signatureSha = CryptoJSNew.HmacSHA1(signa, secretKey);
+        const signa = CryptoJS.MD5(appId + ts).toString();
+        const signatureSha = CryptoJS.HmacSHA1(signa, secretKey);
         let signature: string = CryptoJS.enc.Base64.stringify(signatureSha);
         signature = encodeURIComponent(signature);
         params.current = `?appid=${appId}&ts=${ts}&signa=${signature}`;
