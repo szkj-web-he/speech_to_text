@@ -126,6 +126,7 @@ body > div:first-child {
         cursor: pointer;
         position: absolute;
         margin: 0 auto;
+        top: 0;
         &::after {
             content: "";
             position: absolute;
@@ -198,6 +199,7 @@ body > div:first-child {
         flex-flow: row nowrap;
         cursor: pointer;
         position: absolute;
+        top: 0;
     }
 
     .btn_icon {

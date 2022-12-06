@@ -11,10 +11,10 @@ import { Dropdown } from "./Components/Dropdown";
 import { DropdownBtn } from "./Components/DropdownBtn";
 import { DropdownContent } from "./Components/DropdownContent";
 import Mike from "./Components/Icon/mikeIcon";
-import { useMobile } from "./Components/Scroll/Unit/useMobile";
 import { useMediaDevices } from "./Hooks/useMediaDevices";
 import Timer from "./timer";
 import { OptionProps } from "./type";
+import { useMobile } from "./Components/Scroll/Unit/useMobile";
 
 /* 
 <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
@@ -49,6 +49,14 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
     const messageData = useRef<{ value: string; start: number }>();
 
     const timer = useRef<number>();
+
+    const mobileStatus = useMobile();
+
+    const delayTimer = useRef<number>();
+
+    const [delayLoading, setDelayLoading] = useState(false);
+
+    const destroy = useRef(false);
 
     const [fn, openLoading, closeLoading] = useMediaDevices(
         (res) => {
@@ -91,16 +99,19 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
         },
         () => {
             setStart(false);
+            setDelayLoading(true);
+            delayTimer.current = window.setTimeout(() => {
+                if (destroy.current) {
+                    return;
+                }
+                setDelayLoading(false);
+            }, 1000);
         },
     );
-
-    const mobileStatus = useMobile();
 
     const ref = useRef<HTMLTextAreaElement | null>(null);
 
     const focusStatus = useRef(false);
-
-    const inputVal = useRef<string>();
 
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
@@ -126,9 +137,14 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
     /************* This section will include this component general function *************/
 
     useEffect(() => {
+        destroy.current = false;
         return () => {
+            destroy.current = true;
             if (timer.current) {
                 window.clearTimeout(timer.current);
+            }
+            if (delayTimer.current) {
+                window.clearTimeout(delayTimer.current);
             }
         };
     }, []);
@@ -160,10 +176,10 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                     }}
                     onInput={(e) => {
                         timer.current && window.clearTimeout(timer.current);
-                        inputVal.current = e.currentTarget.value;
+                        const value = e.currentTarget.value.trim();
                         timer.current = window.setTimeout(() => {
                             timer.current = undefined;
-                            setValue(e.currentTarget.value);
+                            setValue(value);
                         });
                     }}
                 />
@@ -172,7 +188,9 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                     <Dropdown
                         delayOnShow={1000}
                         trigger={"hover"}
-                        disable={start || openLoading || closeLoading || mobileStatus}
+                        disable={
+                            start || openLoading || closeLoading || mobileStatus || delayLoading
+                        }
                         placement="ct"
                         triangle={{
                             width: "9px",
@@ -185,7 +203,7 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={handleStart}
                             style={
-                                !start && !openLoading && !closeLoading
+                                !start && !openLoading && !closeLoading && !delayLoading
                                     ? undefined
                                     : { opacity: "0" }
                             }
@@ -198,15 +216,20 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                     </Dropdown>
                     <div
                         className="btn_loading"
-                        style={openLoading || closeLoading ? undefined : { display: "none" }}
+                        style={
+                            openLoading || closeLoading || delayLoading
+                                ? undefined
+                                : { display: "none" }
+                        }
                     >
                         loading···
                     </div>
-
                     <div
                         className="stopBtn"
                         style={
-                            start && !openLoading && !closeLoading ? undefined : { display: "none" }
+                            start && !openLoading && !closeLoading && !delayLoading
+                                ? undefined
+                                : { display: "none" }
                         }
                         onMouseDown={(e) => e.preventDefault()}
                     >

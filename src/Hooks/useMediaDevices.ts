@@ -1,9 +1,10 @@
 /**
  * 获取媒体设备
  */
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CustomNavigator } from "../type";
 const recorderWorker = new Worker(new URL("../video.worker.ts", import.meta.url));
+import { useLayoutEffect } from "react";
 
 interface LangData {
     st: {
@@ -56,6 +57,10 @@ export const useMediaDevices = (
 
     const [openLoading, setOpenLoading] = useState(false);
     const [closeLoading, setCloseLoading] = useState(false);
+
+    const closeTimer = useRef<number>();
+
+    const destroy = useRef(false);
 
     useLayoutEffect(() => {
         pendingFnRef.current = handlePending;
@@ -297,6 +302,7 @@ export const useMediaDevices = (
             };
 
             ws.onerror = () => {
+                ws.send('{"end": true}');
                 ws.close();
                 cancelFnRef.current();
             };
@@ -310,6 +316,14 @@ export const useMediaDevices = (
             };
         }
     }, [start]);
+
+    useEffect(() => {
+        destroy.current = false;
+        return () => {
+            destroy.current = true;
+            closeTimer.current && window.clearTimeout(closeTimer.current);
+        };
+    }, []);
 
     useEffect(() => {
         return () => {
@@ -383,7 +397,12 @@ export const useMediaDevices = (
         recorderRef.current?.disconnect();
         mediaStreamRef.current?.disconnect();
         contextRef.current?.close().then(() => {
-            setCloseLoading(false);
+            closeTimer.current = window.setTimeout(() => {
+                if (destroy.current) {
+                    return;
+                }
+                setCloseLoading(false);
+            }, 1000);
         });
         contextRef.current = null;
         bufferRef.current = [];
