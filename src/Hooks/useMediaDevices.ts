@@ -126,7 +126,6 @@ export const useMediaDevices = (
         const fn = (e: MessageEvent<{ type: "transform" | unknown; buffer: Array<number> }>) => {
             switch (e.data.type) {
                 case "transform":
-                    console.log("message");
                     bufferRef.current.push(...e.data.buffer);
                     break;
                 default:
@@ -149,7 +148,6 @@ export const useMediaDevices = (
 
     useEffect(() => {
         return () => {
-            console.log("生命周期结束时移除设备");
             if (wsRef.current?.readyState === 1) {
                 wsRef.current.send('{"end": true}');
                 wsRef.current.close();
@@ -167,7 +165,9 @@ export const useMediaDevices = (
             recorderRef.current = null;
             startTimer.current && window.clearTimeout(startTimer.current);
             intervalTimer.current && window.clearInterval(intervalTimer.current);
+            closeTimer.current && window.clearTimeout(closeTimer.current);
             startTimer.current = undefined;
+            closeTimer.current = undefined;
             intervalTimer.current = undefined;
         };
     }, []);
@@ -410,9 +410,9 @@ export const useMediaDevices = (
                 .then(getDeviceSuccess)
                 .catch(getDeviceFail);
         };
-
         // 当开始录音时
         if (status) {
+            closeTimer.current && window.clearTimeout(closeTimer.current);
             setLoading(true);
             pending.current = true;
             requestDevices();
@@ -432,6 +432,7 @@ export const useMediaDevices = (
             mediaStreamRef.current?.disconnect();
             contextRef.current?.close().then(() => {
                 closeTimer.current = window.setTimeout(() => {
+                    closeTimer.current = undefined;
                     if (destroy.current) {
                         return;
                     }

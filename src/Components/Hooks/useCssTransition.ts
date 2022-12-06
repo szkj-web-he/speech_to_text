@@ -302,7 +302,6 @@ export const useCssTransition = (
          * 结束进入
          */
         const enterEnd = () => {
-            // console.log("enter end");
             timer && window.clearTimeout(timer);
             timer = null;
             transitionStatus.current.isOver = true;
@@ -322,7 +321,6 @@ export const useCssTransition = (
          *  进入 后
          */
         const enterTo = () => {
-            // console.log("enter to");
             operationClassName("remove", [transitionClass.enter.from]);
 
             if (nodeSize.current) {
@@ -365,7 +363,6 @@ export const useCssTransition = (
          *
          */
         const enterFrom = () => {
-            // console.log("enter from");
             operationClassName("add", [transitionClass.enter.from, transitionClass.enter.active]);
             operationClassName(
                 "remove",
@@ -398,7 +395,7 @@ export const useCssTransition = (
             root.removeEventListener("transitionend", transitionendWhenHidden, false);
 
             timer && window.clearTimeout(timer);
-            // console.log("leaveEnd");
+
             timer = null;
             transitionEndFn.current?.();
         };
@@ -431,7 +428,7 @@ export const useCssTransition = (
                 }
                 leaveEnd();
             }, (transitionAttr?.timeout ?? 0) + 1);
-            // console.log("leaveTo");
+
             root.addEventListener("transitionend", transitionendWhenHidden, false);
         };
 
@@ -439,8 +436,6 @@ export const useCssTransition = (
          * 离开前
          */
         const leaveFrom = () => {
-            // console.log("leaveFrom");
-
             if (nodeSize.current) {
                 switch (animationName.current) {
                     case "taller":
@@ -498,7 +493,6 @@ export const useCssTransition = (
          */
         const whenTransitionCancel = () => {
             if (transitionStatus.current.isOver === false) {
-                // console.log("whenTransitionCancel");
                 transitionStatus.current.isOver = true;
                 transitionCancelFn.current?.();
             }
@@ -509,8 +503,6 @@ export const useCssTransition = (
             }
 
             if (transitionStatus.current.animation) {
-                // console.log("我的过渡动画没有执行完成");
-
                 addStyleRef.current = undefined;
                 root && setStyle(root, styleRef.current);
                 if (show) {
@@ -554,7 +546,6 @@ export const useCssTransition = (
             const rect = el?.getBoundingClientRect();
             nodeSize.current = { width: rect?.width ?? 0, height: rect?.height ?? 0 };
             getSizeCallback.current?.(el);
-            // console.log(JSON.stringify(nodeSize.current), "size");
         };
 
         /**
@@ -589,7 +580,6 @@ export const useCssTransition = (
          * 当取消时
          */
         const whenCancel = () => {
-            // console.log("whenCancel");
             resetFn();
             if (!transitionStatus.current.isOver) {
                 transitionStatus.current.isOver = true;
@@ -624,8 +614,6 @@ export const useCssTransition = (
         };
 
         if (!ready.value) {
-            // console.log("开始准备读取宽高");
-
             /**
              * 操作
              */
@@ -662,7 +650,7 @@ export const useCssTransition = (
                         })
                         .then(() => {
                             isPending = false;
-                            // console.log("获取成功");
+
                             setReady((pre) => {
                                 return compareFn({ value: true, show: pre.show }, pre);
                             });
@@ -674,7 +662,7 @@ export const useCssTransition = (
                     void delayFn().then(() => {
                         setSizeFn(root);
                         isPending = false;
-                        // console.log("获取成功");
+
                         forceReflow();
                         setReady((pre) => {
                             return compareFn({ value: true, show: pre.show }, pre);
@@ -683,7 +671,6 @@ export const useCssTransition = (
                 }
             };
 
-            // console.log(ready.show, "readyShow");
             mainFn();
         }
         return () => {
@@ -692,7 +679,6 @@ export const useCssTransition = (
             }
             destroy = true;
             if (isPending) {
-                // console.log("cancel");
                 whenCancel();
             }
         };
@@ -706,7 +692,6 @@ export const useCssTransition = (
                 transitionClassName.current = initClassName(action.payload);
                 break;
             case ActionType.SwitchVisibleStatusAction:
-                // console.log(JSON.stringify(action.payload));
                 if (showRef.current === action.payload.value) {
                     return;
                 }
@@ -731,8 +716,7 @@ export const useCssTransition = (
 
             case ActionType.InitSizeAction:
                 // console.clear();
-                // console.log(" ");
-                // console.log("InitSizeAction", action.payload.value);
+
                 if (showRef.current === action.payload.value) {
                     return;
                 }
@@ -751,8 +735,6 @@ export const useCssTransition = (
                 break;
 
             case ActionType.AfterReadyAction:
-                // console.log(" ");
-                // console.log("AfterReadyAction", action.payload.value);
                 isTransition.current = action.payload.isTransition;
                 setShow(action.payload.value);
                 break;
