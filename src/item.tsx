@@ -58,7 +58,7 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
 
     const destroy = useRef(false);
 
-    const [fn, openLoading, closeLoading] = useMediaDevices(
+    const [fn, isPending] = useMediaDevices(
         (res) => {
             const node = ref.current;
             if (!node) {
@@ -118,6 +118,7 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
     /************* This section will include this component parameter *************/
 
     const handleStart = () => {
+        delayTimer.current && window.clearTimeout(delayTimer.current);
         setStart(true);
         fn(true);
         if (!focusStatus.current) {
@@ -126,6 +127,7 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
     };
 
     const handleStop = () => {
+        delayTimer.current && window.clearTimeout(delayTimer.current);
         if (start === true) {
             setStart(false);
             fn(false);
@@ -188,9 +190,7 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                     <Dropdown
                         delayOnShow={1000}
                         trigger={"hover"}
-                        disable={
-                            start || openLoading || closeLoading || mobileStatus || delayLoading
-                        }
+                        disable={start || isPending || mobileStatus || delayLoading}
                         placement="ct"
                         triangle={{
                             width: "9px",
@@ -203,9 +203,7 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={handleStart}
                             style={
-                                !start && !openLoading && !closeLoading && !delayLoading
-                                    ? undefined
-                                    : { opacity: "0" }
+                                !start && !isPending && !delayLoading ? undefined : { opacity: "0" }
                             }
                         >
                             <Mike className="btn_icon" />
@@ -216,20 +214,14 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                     </Dropdown>
                     <div
                         className="btn_loading"
-                        style={
-                            openLoading || closeLoading || delayLoading
-                                ? undefined
-                                : { display: "none" }
-                        }
+                        style={isPending || delayLoading ? undefined : { display: "none" }}
                     >
                         loading···
                     </div>
                     <div
                         className="stopBtn"
                         style={
-                            start && !openLoading && !closeLoading && !delayLoading
-                                ? undefined
-                                : { display: "none" }
+                            start && !isPending && !delayLoading ? undefined : { display: "none" }
                         }
                         onMouseDown={(e) => e.preventDefault()}
                     >

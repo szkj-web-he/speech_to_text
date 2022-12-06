@@ -105,18 +105,15 @@ const Temp = forwardRef<HTMLDivElement, TempProps>(
         const [dispatch, currentClassName, currentStyle] = useCssTransition(
             initStyle,
             () => {
-                // console.log("**************** start ******************");
                 handleTransitionStart?.();
             },
             () => {
-                // console.log("**************** end ******************");
                 handleTransitionEnd?.();
                 transitionEnd.current = true;
                 setRefresh((pre) => ++pre);
             },
 
             () => {
-                // console.log("****************** cancel ********************");
                 handleTransitionCancel?.();
             },
             portalRef.current,
@@ -498,7 +495,6 @@ const Temp = forwardRef<HTMLDivElement, TempProps>(
                     setTransitionClass(data);
                 }
                 if (needSwitchVisible.current) {
-                    // console.log("dispatch时候的show值", oldShow.current);
                     dispatchRef.current({
                         type: ActionType.AfterReadyAction,
                         payload: {
