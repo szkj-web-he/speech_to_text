@@ -302,11 +302,11 @@ export const useMediaDevices = (
             };
 
             ws.onerror = () => {
+                ws.send('{"end": true}');
                 ws.close();
                 cancelFnRef.current();
             };
             ws.onclose = () => {
-                ws.send('{"end": true}');
                 cancelConnect();
             };
             return () => {
