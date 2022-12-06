@@ -58,6 +58,10 @@ export const useMediaDevices = (
     const [openLoading, setOpenLoading] = useState(false);
     const [closeLoading, setCloseLoading] = useState(false);
 
+    const closeTimer = useRef<number>();
+
+    const destroy = useRef(false);
+
     useLayoutEffect(() => {
         pendingFnRef.current = handlePending;
     }, [handlePending]);
@@ -112,7 +116,6 @@ export const useMediaDevices = (
             const fn = (
                 e: MessageEvent<{ type: "transform" | unknown; buffer: Array<number> }>,
             ) => {
-                console.log("message");
                 switch (e.data.type) {
                     case "transform":
                         bufferRef.current.push(...e.data.buffer);
@@ -303,6 +306,7 @@ export const useMediaDevices = (
                 cancelFnRef.current();
             };
             ws.onclose = () => {
+                ws.send('{"end": true}');
                 cancelConnect();
             };
             return () => {
@@ -312,6 +316,14 @@ export const useMediaDevices = (
             };
         }
     }, [start]);
+
+    useEffect(() => {
+        destroy.current = false;
+        return () => {
+            destroy.current = true;
+            closeTimer.current && window.clearTimeout(closeTimer.current);
+        };
+    }, []);
 
     useEffect(() => {
         return () => {
@@ -329,7 +341,6 @@ export const useMediaDevices = (
     }, []);
 
     const fn = useCallback((status: boolean) => {
-        console.log("status", status);
         if (status) {
             setOpenLoading(true);
 
@@ -386,7 +397,12 @@ export const useMediaDevices = (
         recorderRef.current?.disconnect();
         mediaStreamRef.current?.disconnect();
         contextRef.current?.close().then(() => {
-            setCloseLoading(false);
+            closeTimer.current = window.setTimeout(() => {
+                if (destroy.current) {
+                    return;
+                }
+                setCloseLoading(false);
+            }, 1000);
         });
         contextRef.current = null;
         bufferRef.current = [];
