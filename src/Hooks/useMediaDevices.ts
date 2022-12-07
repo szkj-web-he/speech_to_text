@@ -84,10 +84,10 @@ export const useMediaDevices = (
      * 参数
      */
     useEffect(() => {
-        const appId = "4a6a32c6";
-        const secretKey = "ebbe49206100e5e36d6821e70704261f";
-        // const appId = "bf886070";
-        // const secretKey = "dd2f96d417514c64a1fab96d3bdf748a";
+        // const appId = "4a6a32c6";
+        // const secretKey = "ebbe49206100e5e36d6821e70704261f";
+        const appId = "bf886070";
+        const secretKey = "dd2f96d417514c64a1fab96d3bdf748a";
         const ts = Math.floor(new Date().getTime() / 1000).toString(); //new Date().getTime()/1000+'';
         const signa = CryptoJS.MD5(appId + ts).toString();
         const signatureSha = CryptoJS.HmacSHA1(signa, secretKey);
