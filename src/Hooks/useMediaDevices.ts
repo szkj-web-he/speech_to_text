@@ -86,6 +86,8 @@ export const useMediaDevices = (
     useEffect(() => {
         const appId = "4a6a32c6";
         const secretKey = "ebbe49206100e5e36d6821e70704261f";
+        // const appId = "bf886070";
+        // const secretKey = "dd2f96d417514c64a1fab96d3bdf748a";
         const ts = Math.floor(new Date().getTime() / 1000).toString(); //new Date().getTime()/1000+'';
         const signa = CryptoJS.MD5(appId + ts).toString();
         const signatureSha = CryptoJS.HmacSHA1(signa, secretKey);
@@ -371,7 +373,10 @@ export const useMediaDevices = (
             //发生错误的时候会自动断开链接
 
             cancelFnRef.current();
+
+            setLoading(false);
             reset();
+            alert("链接失败,请检查网络");
         };
 
         /**
