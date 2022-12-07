@@ -11,10 +11,10 @@ import { Dropdown } from "./Components/Dropdown";
 import { DropdownBtn } from "./Components/DropdownBtn";
 import { DropdownContent } from "./Components/DropdownContent";
 import Mike from "./Components/Icon/mikeIcon";
+import { useMobile } from "./Components/Scroll/Unit/useMobile";
 import { useMediaDevices } from "./Hooks/useMediaDevices";
 import Timer from "./timer";
 import { OptionProps } from "./type";
-import { useMobile } from "./Components/Scroll/Unit/useMobile";
 
 /* 
 <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
@@ -189,8 +189,9 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                 <div className="btnContainer">
                     <Dropdown
                         delayOnShow={1000}
-                        trigger={"hover"}
-                        disable={start || isPending || mobileStatus || delayLoading}
+                        trigger={
+                            start || isPending || mobileStatus || delayLoading ? undefined : "hover"
+                        }
                         placement="ct"
                         triangle={{
                             width: "9px",
