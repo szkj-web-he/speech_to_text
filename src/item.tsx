@@ -189,8 +189,9 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                 <div className="btnContainer">
                     <Dropdown
                         delayOnShow={1000}
-                        trigger={"hover"}
-                        disable={start || isPending || mobileStatus || delayLoading}
+                        trigger={
+                            start || isPending || mobileStatus || delayLoading ? undefined : "hover"
+                        }
                         placement="ct"
                         triangle={{
                             width: "9px",
