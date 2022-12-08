@@ -3,7 +3,7 @@
  */
 import CryptoJS from "crypto-js";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { CustomNavigator } from "../type";
+import { ALiMessageProps, CustomNavigator, StartMessage } from "../type";
 
 const recorderWorker = new Worker(new URL("../video.worker.ts", import.meta.url));
 
@@ -25,12 +25,10 @@ interface LangData {
     };
 }
 
-// const mainDomain = "api.dev.datareachable.net/datacoll/v2/dev/";
-const mainDomain = "";
+const mainDomain = "api.dev.datareachable.net/datacoll/v2/dev/";
+// const mainDomain = "192.168.10.5:3000/";
 
-// const url = "v2/dev/ws/xfyun/rtasr/v1";
-const url = "rtasr.xfyun.cn/v1/ws";
-
+const url = "ws/xfyun/rtasr/v1";
 /**
  * 获取媒体权限
  * @param handleStart 获取媒体权限成功
@@ -42,8 +40,6 @@ export const useMediaDevices = (
     handlePending: (data: { value: string; type: "0" | "1" }) => void,
     handleCancel: () => void,
 ): [(status: boolean) => void, boolean] => {
-    const params = useRef("");
-
     const mediaStreamRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
     const recorderRef = useRef<ScriptProcessorNode | null>(null);
@@ -79,22 +75,6 @@ export const useMediaDevices = (
     useLayoutEffect(() => {
         cancelFnRef.current = handleCancel;
     }, [handleCancel]);
-
-    /**
-     * 参数
-     */
-    useEffect(() => {
-        // const appId = "4a6a32c6";
-        // const secretKey = "ebbe49206100e5e36d6821e70704261f";
-        const appId = "bf886070";
-        const secretKey = "dd2f96d417514c64a1fab96d3bdf748a";
-        const ts = Math.floor(new Date().getTime() / 1000).toString(); //new Date().getTime()/1000+'';
-        const signa = CryptoJS.MD5(appId + ts).toString();
-        const signatureSha = CryptoJS.HmacSHA1(signa, secretKey);
-        let signature: string = CryptoJS.enc.Base64.stringify(signatureSha);
-        signature = encodeURIComponent(signature);
-        params.current = `?appid=${appId}&ts=${ts}&signa=${signature}`;
-    }, []);
 
     /**
      * getUserMedia的兼容处理
@@ -200,6 +180,7 @@ export const useMediaDevices = (
          * 成功获取设备
          */
         const getDeviceSuccess = (stream: MediaStream) => {
+            console.log("111");
             /**
              * 音频轨迹存储起来
              * 在销毁时可以更快的终止
@@ -224,6 +205,7 @@ export const useMediaDevices = (
          * 获取设备失败
          */
         const getDeviceFail = () => {
+            console.log("222");
             alert("请求麦克风失败");
             reset();
             cancelFnRef.current();
@@ -243,26 +225,28 @@ export const useMediaDevices = (
             }
         };
 
+        const getParams = () => {
+            const isoStr = new Date().toISOString();
+            const key = "PRder3XcU7VmOSdB";
+            const data = CryptoJS.HmacSHA1(isoStr, key);
+            const str = CryptoJS.enc.Base64.stringify(data);
+            return `{
+            "time":"${decodeURIComponent(isoStr)}",
+            "sign":"${decodeURIComponent(str)}"}`;
+        };
+
+        let openTimer = 0;
+
         /**
          * 当WebSocket创建成功时
          */
         const handleOpen = () => {
             setLoading(false);
-            /**
-             * 当讲述者说一会
-             * 不然没有音频数据
-             */
-            startTimer.current = window.setTimeout(() => {
-                startTimer.current = undefined;
-                if (destroy.current || wsRef.current?.readyState !== 1) {
-                    return;
-                }
-
-                const audioData = bufferRef.current.splice(0, 1280);
-                wsRef.current.send(new Int8Array(audioData));
-
-                intervalTimer.current = window.setInterval(intervalSend, 40);
-            }, 500);
+            if (wsRef.current?.readyState !== 1) {
+                return;
+            }
+            wsRef.current?.send(getParams());
+            openTimer = Date.now();
         };
 
         /**
@@ -291,45 +275,73 @@ export const useMediaDevices = (
         /**
          * 当websocket返回的code不正常时
          */
-        const handleMessageError = (res: {
-            action: "started" | "result" | "error";
-            code: string;
-            desc: string;
-            sid: string;
-            data?: string;
-        }) => {
-            switch (res.code) {
-                case "10105":
-                    alert("未授权许可");
+        const handleMessageError = (res: ALiMessageProps) => {
+            switch (res.header.status) {
+                case 40_000_000:
+                    alert("参数不正确");
                     break;
-                case "10106":
+                case 40_000_001:
                     alert("参数错误");
                     break;
-                case "10107":
+                case 40_000_002:
+                    alert("发送的message错误");
+                    break;
+                case 40_000_003:
                     alert("参数错误");
                     break;
-                case "10110":
-                    alert("未授权许可");
+                case 40_000_005:
+                    alert("并发请求过多");
                     break;
-                case "10202":
-                    alert("请检查网络是否正常,稍后请重试");
+                case 40_000_009:
+                    alert("错误的消息头");
                     break;
-                case "10204":
-                    alert("请检查网络是否正常,稍后请重试");
+                case 40_000_010:
+                    alert("试用期已结束，并且未开通商用版、或账号欠费");
                     break;
-                case "10205":
-                    alert("请检查网络是否正常,稍后请重试");
+                case 40_010_001:
+                    alert("不支持的接口或参数");
                     break;
-                case "16003":
-                    alert("基础组件异常,稍后请重试");
+                case 40_010_003:
+                    alert("客户端侧通用错误码");
                     break;
-                case "10800":
-                    alert("超过授权的连接数,请联系开发人员");
+                case 40_010_004:
+                    alert("在请求处理完成前客户端主动结束");
+                    break;
+                case 40_010_005:
+                    alert("客户端发送了当前不支持的消息指令");
+                    break;
+                case 40_020_105:
+                    alert("使用了不存在的Appkey");
+                    break;
+                case 40_020_106:
+                    alert("调用时传递的Appkey和Token并非同一个账号UID所创建，导致不匹配");
+                    break;
+                case 403:
+                    alert("使用的Token无效，例如Token不存在或者已过期");
+                    break;
+                case 41_000_003:
+                    alert("无法获取该Appkey的路由信息");
+                    break;
+                case 41_010_101:
+                    alert("不支持的采样率格式");
+                    break;
+                case 41_040_201:
+                    alert("获取客户端发送的数据超时失败");
+                    break;
+                case 50_000_000:
+                    alert("受机器负载、网络等因素导致的异常，通常为偶发出现");
+                    break;
+                case 50_000_001:
+                    alert("受机器负载、网络等因素导致的异常，通常为偶发出现");
+                    break;
+                case 52_010_001:
+                    alert("受机器负载、网络等因素导致的异常，通常为偶发出现");
                     break;
                 default:
                     alert("发生未知错误,稍后请重试");
                     break;
             }
+
             //code不正常 还要做些什么
             cancelFnRef.current();
             reset();
@@ -338,33 +350,70 @@ export const useMediaDevices = (
         /**
          * 接收到websocket返回的消息时
          */
-        const handleMessage = (e: MessageEvent<string>) => {
-            const res = JSON.parse(e.data) as {
-                action: "started" | "result" | "error";
-                code: string;
-                desc: string;
-                sid: string;
-                data?: string;
+        const handleMessageStart = (res: StartMessage) => {
+            const code = res.header.status;
+            //开始轮询
+            const startInterval = () => {
+                if (destroy.current || wsRef.current?.readyState !== 1) {
+                    return;
+                }
+                const audioData = bufferRef.current.splice(0, 1280);
+                wsRef.current.send(new Int8Array(audioData));
+
+                intervalTimer.current = window.setInterval(intervalSend, 40);
             };
 
-            const data = res.data ? (JSON.parse(res.data) as Record<"cn", LangData>) : undefined;
+            if (code === 20_000_000) {
+                const nowTime = Date.now();
 
-            if (res.code !== "0") {
-                handleMessageError(res);
+                if (nowTime - openTimer > 500) {
+                    startInterval();
+                } else {
+                    /**
+                     * 当讲述者说一会
+                     * 不然没有音频数据
+                     */
+                    startTimer.current = window.setTimeout(() => {
+                        startTimer.current = undefined;
+                        startInterval();
+                    }, 500);
+                }
+                openTimer = 0;
                 return;
             }
-
-            switch (res.action) {
-                case "result":
-                    if (data) {
-                        mapText(data[lang]);
-                    }
-                    break;
-                case "error":
-                    handleMessageError(res);
-                    break;
-            }
+            handleMessageError(res);
+            cancelFnRef.current();
+            wsRef.current?.close();
         };
+
+        // const handleMessage = (e: MessageEvent<string>) => {
+        //     console.log("message", e);
+        //     const res = JSON.parse(e.data) as {
+        //         action: "started" | "result" | "error";
+        //         code: string;
+        //         desc: string;
+        //         sid: string;
+        //         data?: string;
+        //     };
+
+        //     const data = res.data ? (JSON.parse(res.data) as Record<"cn", LangData>) : undefined;
+
+        //     if (res.code !== "0") {
+        //         handleMessageError(res);
+        //         return;
+        //     }
+
+        //     switch (res.action) {
+        //         case "result":
+        //             if (data) {
+        //                 mapText(data[lang]);
+        //             }
+        //             break;
+        //         case "error":
+        //             handleMessageError(res);
+        //             break;
+        //     }
+        // };
 
         /**
          * 监听onerror事件
@@ -382,7 +431,8 @@ export const useMediaDevices = (
         /**
          * 监听onclose事件
          */
-        const handleClose = () => {
+        const handleClose = (e) => {
+            console.log("onclose", e);
             reset();
         };
 
@@ -390,14 +440,22 @@ export const useMediaDevices = (
          * 创建WebSocket
          */
         const createWebSocket = () => {
-            const ws = (wsRef.current = new WebSocket(
-                `wss://${mainDomain}${url}${params.current}&lang=${lang}`,
-            ));
+            const ws = (wsRef.current = new WebSocket(`wss://${mainDomain}${url}`));
             //当建立链接时
             ws.onopen = handleOpen;
 
             //当接受到消息时
-            ws.onmessage = handleMessage;
+            ws.onmessage = (e: MessageEvent<string>) => {
+                console.log("message", e);
+                // 接收到websocket返回的消息时
+                const data = JSON.parse(e.data) as ALiMessageProps;
+
+                switch (data.header.namespace) {
+                    case "SpeechTranscriber":
+                        handleMessageStart(data);
+                        return;
+                }
+            };
 
             //当发生错误时
             ws.onerror = handleError;
@@ -415,6 +473,8 @@ export const useMediaDevices = (
                 .then(getDeviceSuccess)
                 .catch(getDeviceFail);
         };
+
+        console.log("status", status);
         // 当开始录音时
         if (status) {
             closeTimer.current && window.clearTimeout(closeTimer.current);

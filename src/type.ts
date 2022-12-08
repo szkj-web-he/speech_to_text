@@ -12,3 +12,16 @@ export interface CustomNavigator {
     mozGetUserMedia?: (constraints?: MediaStreamConstraints) => Promise<MediaStream>;
     msGetUserMedia?: (constraints?: MediaStreamConstraints) => Promise<MediaStream>;
 }
+
+export interface StartMessage {
+    header: {
+        message_id: string;
+        name: "TranscriptionStarted";
+        namespace: "SpeechTranscriber";
+        status: number;
+        status_text: string;
+        task_id: string;
+    };
+}
+
+export type ALiMessageProps = StartMessage;
