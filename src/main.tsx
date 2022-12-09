@@ -78,6 +78,7 @@ const Temp: React.FC = () => {
                                 return (
                                     <Fragment key={index}>
                                         <Item
+                                            id={item.code}
                                             data={{ ...item }}
                                             isOnly={cols.length < 2}
                                             key={item.code}

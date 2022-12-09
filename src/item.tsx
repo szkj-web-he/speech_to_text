@@ -45,10 +45,12 @@ interface TempProps {
      * 是不是独生子
      */
     isOnly: boolean;
+
+    id: string;
 }
 /* <------------------------------------ **** INTERFACE END **** ------------------------------------ */
 /* <------------------------------------ **** FUNCTION COMPONENT START **** ------------------------------------ */
-const Temp: React.FC<TempProps> = ({ show, setShow, data, defaultValue, setValue, isOnly }) => {
+const Temp: React.FC<TempProps> = ({ show, setShow, data, defaultValue, setValue, isOnly, id }) => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
     // const [start, setStart] = useState(false);
@@ -133,10 +135,12 @@ const Temp: React.FC<TempProps> = ({ show, setShow, data, defaultValue, setValue
 
     useLayoutEffect(() => {
         if (typeof showRef.current === "boolean") {
+            console.log(id, show, "show");
             delayTimer.current && window.clearTimeout(delayTimer.current);
             fnRef.current(show);
         }
         showRef.current = show;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [show]);
 
     const handleStart = () => {
