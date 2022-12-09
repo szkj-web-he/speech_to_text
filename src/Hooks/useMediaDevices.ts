@@ -247,7 +247,11 @@ export const useMediaDevices = (
             if (destroy.current || wsRef.current?.readyState !== 1) {
                 return;
             }
+
             const audioData = bufferRef.current.splice(0, 1280);
+            if (audioData.every((item) => item === 0)) {
+                return;
+            }
             if (audioData.length > 0) {
                 wsRef.current.send(new Int8Array(audioData));
             }
@@ -447,6 +451,8 @@ export const useMediaDevices = (
 
             //当接受到消息时
             ws.onmessage = (e: MessageEvent<string>) => {
+                console.log("message", e);
+
                 // 接收到websocket返回的消息时
                 const data = JSON.parse(e.data) as ALiMessageProps;
                 let typeData: ALiMessageProps | null = null;
