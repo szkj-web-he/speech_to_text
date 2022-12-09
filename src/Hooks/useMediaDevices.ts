@@ -247,7 +247,11 @@ export const useMediaDevices = (
             if (destroy.current || wsRef.current?.readyState !== 1) {
                 return;
             }
+
             const audioData = bufferRef.current.splice(0, 1280);
+            if (audioData.every((item) => item === 0)) {
+                return;
+            }
             if (audioData.length > 0) {
                 wsRef.current.send(new Int8Array(audioData));
             }
@@ -271,8 +275,7 @@ export const useMediaDevices = (
         /**
          * 当WebSocket创建成功时
          */
-        const handleOpen = (e) => {
-            console.log("open", e);
+        const handleOpen = () => {
             setLoading(false);
             if (wsRef.current?.readyState !== 1) {
                 return;
