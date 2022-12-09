@@ -36,6 +36,21 @@ const Temp: React.FC = () => {
         return data;
     });
 
+    const [showData, setShowData] = useState(() => {
+        const rows = comms.config.options?.[0] ?? [];
+        const cols = comms.config.options?.[1] ?? [];
+
+        const data: Record<string, boolean> = {};
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            for (let j = 0; j < cols.length; j++) {
+                const col = cols[j];
+                data[`${row.code as string}_${col.code as string}`] = false;
+            }
+        }
+        return data;
+    });
+
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
@@ -71,6 +86,23 @@ const Temp: React.FC = () => {
                                             data={{ ...item }}
                                             isOnly={cols.length < 2}
                                             key={item.code}
+                                            show={
+                                                showData[
+                                                    `${row.code as string}_${item.code as string}`
+                                                ]
+                                            }
+                                            setShow={(res) => {
+                                                const itemKey = `${row.code as string}_${
+                                                    item.code as string
+                                                }`;
+                                                setShowData((pre) => {
+                                                    const data = { ...pre };
+                                                    for (const key in pre) {
+                                                        data[key] = key === itemKey ? res : false;
+                                                    }
+                                                    return { ...data };
+                                                });
+                                            }}
                                             defaultValue={state[row.code][item.code]}
                                             setValue={(res) => {
                                                 setState((pre) => {
