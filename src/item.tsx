@@ -15,12 +15,19 @@ import { useMediaDevices } from "./Hooks/useMediaDevices";
 import Timer from "./timer";
 import { OptionProps } from "./type";
 import { useMobile } from "./Components/Scroll/Unit/useMobile";
+import { useLayoutEffect } from "react";
 
 /* 
 <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
 /* <------------------------------------ **** INTERFACE START **** ------------------------------------ */
 /** This section will include all the interface for this tsx file */
 interface TempProps {
+    /**
+     *
+     */
+    show: boolean;
+
+    setShow: (value: boolean) => void;
     /**
      * 当前的选项的值
      */
@@ -41,10 +48,10 @@ interface TempProps {
 }
 /* <------------------------------------ **** INTERFACE END **** ------------------------------------ */
 /* <------------------------------------ **** FUNCTION COMPONENT START **** ------------------------------------ */
-const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => {
+const Temp: React.FC<TempProps> = ({ show, setShow, data, defaultValue, setValue, isOnly }) => {
     /* <------------------------------------ **** STATE START **** ------------------------------------ */
     /************* This section will include this component HOOK function *************/
-    const [start, setStart] = useState(false);
+    // const [start, setStart] = useState(false);
 
     const messageData = useRef<{ value: string; start: number }>();
 
@@ -98,7 +105,7 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
             setValue(node.value);
         },
         () => {
-            setStart(false);
+            setShow(false);
             setDelayLoading(true);
             delayTimer.current = window.setTimeout(() => {
                 if (destroy.current) {
@@ -113,25 +120,34 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
 
     const focusStatus = useRef(false);
 
+    const showRef = useRef<boolean>();
+
+    const fnRef = useRef(fn);
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
 
+    useLayoutEffect(() => {
+        fnRef.current = fn;
+    }, [fn]);
+
+    useEffect(() => {
+        if (typeof showRef.current === "boolean") {
+            delayTimer.current && window.clearTimeout(delayTimer.current);
+            fnRef.current(show);
+        }
+        showRef.current = show;
+    }, [show]);
+
     const handleStart = () => {
-        delayTimer.current && window.clearTimeout(delayTimer.current);
-        setStart(true);
-        fn(true);
+        setShow(true);
         if (!focusStatus.current) {
             ref.current?.focus();
         }
     };
 
     const handleStop = () => {
-        delayTimer.current && window.clearTimeout(delayTimer.current);
-        if (start === true) {
-            setStart(false);
-            fn(false);
-        }
+        setShow(false);
     };
 
     /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
@@ -190,7 +206,7 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                     <Dropdown
                         delayOnShow={1000}
                         trigger={
-                            start || isPending || mobileStatus || delayLoading ? undefined : "hover"
+                            show || isPending || mobileStatus || delayLoading ? undefined : "hover"
                         }
                         placement="ct"
                         triangle={{
@@ -204,7 +220,7 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={handleStart}
                             style={
-                                !start && !isPending && !delayLoading ? undefined : { opacity: "0" }
+                                !show && !isPending && !delayLoading ? undefined : { opacity: "0" }
                             }
                         >
                             <Mike className="btn_icon" />
@@ -222,11 +238,11 @@ const Temp: React.FC<TempProps> = ({ data, defaultValue, setValue, isOnly }) => 
                     <div
                         className="stopBtn"
                         style={
-                            start && !isPending && !delayLoading ? undefined : { display: "none" }
+                            show && !isPending && !delayLoading ? undefined : { display: "none" }
                         }
                         onMouseDown={(e) => e.preventDefault()}
                     >
-                        <Timer status={start} handleClick={handleStop} />
+                        <Timer status={show} handleClick={handleStop} />
                     </div>
                 </div>
             </div>

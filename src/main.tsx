@@ -27,6 +27,17 @@ const Temp: React.FC = () => {
         return data;
     });
 
+    const [showData, setShowData] = useState(() => {
+        const arr = comms.config.options ?? [];
+        const data: Record<string, boolean> = {};
+
+        for (let i = 0; i < arr.length; i++) {
+            const item = arr[i];
+            data[item.code] = false;
+        }
+        return data;
+    });
+
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
@@ -52,6 +63,15 @@ const Temp: React.FC = () => {
                             isOnly={cols.length < 2}
                             key={item.code}
                             defaultValue={state[item.code]}
+                            show={showData[item.code]}
+                            setShow={(res) => {
+                                setShowData((pre) => {
+                                    for (const key in pre) {
+                                        pre[key] = key === item.code ? res : false;
+                                    }
+                                    return { ...pre };
+                                });
+                            }}
                             setValue={(res) => {
                                 setState((pre) => {
                                     const data = { ...pre };

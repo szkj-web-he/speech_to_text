@@ -433,7 +433,6 @@ export const useMediaDevices = (
          * 监听onclose事件
          */
         const handleClose = (e: CloseEvent) => {
-            console.log("onclose", e);
             if (e.code === 4000) {
                 alert("长时间没有音频数据");
                 cancelFnRef.current();
@@ -451,8 +450,6 @@ export const useMediaDevices = (
 
             //当接受到消息时
             ws.onmessage = (e: MessageEvent<string>) => {
-                console.log("message", e);
-
                 // 接收到websocket返回的消息时
                 const data = JSON.parse(e.data) as ALiMessageProps;
                 let typeData: ALiMessageProps | null = null;
