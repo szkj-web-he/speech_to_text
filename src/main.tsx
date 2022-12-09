@@ -9,6 +9,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { comms } from ".";
 import Item from "./item";
+import { useRef } from "react";
 /* <------------------------------------ **** DEPENDENCE IMPORT END **** ------------------------------------ */
 /* <------------------------------------ **** INTERFACE START **** ------------------------------------ */
 /** This section will include all the interface for this tsx file */
@@ -27,17 +28,9 @@ const Temp: React.FC = () => {
         return data;
     });
 
-    const [showData, setShowData] = useState(() => {
-        const arr = comms.config.options ?? [];
-        const data: Record<string, boolean> = {};
+    const [activeCode, setActiveCode] = useState<string>();
 
-        for (let i = 0; i < arr.length; i++) {
-            const item = arr[i];
-            data[item.code] = false;
-        }
-        return data;
-    });
-
+    const timer = useRef<number>();
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
@@ -45,6 +38,12 @@ const Temp: React.FC = () => {
     useEffect(() => {
         comms.state = state;
     }, [state]);
+
+    useEffect(() => {
+        return () => {
+            timer.current && window.clearTimeout(timer.current);
+        };
+    }, []);
 
     /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
     /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
@@ -63,13 +62,22 @@ const Temp: React.FC = () => {
                             isOnly={cols.length < 2}
                             key={item.code}
                             defaultValue={state[item.code]}
-                            show={showData[item.code]}
+                            show={activeCode === item.code}
                             setShow={(res) => {
-                                setShowData((pre) => {
-                                    for (const key in pre) {
-                                        pre[key] = key === item.code ? res : false;
+                                timer.current && window.clearTimeout(timer.current);
+                                setActiveCode((pre) => {
+                                    if (typeof pre === "undefined") {
+                                        return item.code;
                                     }
-                                    return { ...pre };
+
+                                    timer.current = window.setTimeout(() => {
+                                        timer.current = undefined;
+                                        if (res) {
+                                            setActiveCode(item.code);
+                                        }
+                                    }, 1000);
+
+                                    return undefined;
                                 });
                             }}
                             setValue={(res) => {

@@ -131,7 +131,7 @@ const Temp: React.FC<TempProps> = ({ show, setShow, data, defaultValue, setValue
         fnRef.current = fn;
     }, [fn]);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (typeof showRef.current === "boolean") {
             delayTimer.current && window.clearTimeout(delayTimer.current);
             fnRef.current(show);
