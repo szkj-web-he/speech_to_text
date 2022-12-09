@@ -3,27 +3,8 @@
  */
 import CryptoJS from "crypto-js";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ALiMessageProps, CustomNavigator, StartMessage } from "../type";
-
-const recorderWorker = new Worker(new URL("../video.worker.ts", import.meta.url));
-
-interface LangData {
-    st: {
-        bg: string;
-        ed: string;
-        type: "1" | "0";
-        rt: Array<{
-            ws: Array<{
-                cw: Array<{
-                    w: string;
-                    wp: "n" | "s" | "p";
-                }>;
-                wb: number;
-                we: number;
-            }>;
-        }>;
-    };
-}
+import { ALiMessageProps, CustomNavigator } from "../type";
+import { ChangeMessage, EndMessage } from "./../type";
 
 const mainDomain = "api.dev.datareachable.net/datacoll/v2/dev/";
 // const mainDomain = "192.168.10.5:3000/";
@@ -40,33 +21,80 @@ export const useMediaDevices = (
     handlePending: (data: { value: string; type: "0" | "1" }) => void,
     handleCancel: () => void,
 ): [(status: boolean) => void, boolean] => {
+    /**
+     * 设备音频
+     */
     const mediaStreamRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
+    /**
+     * 记录
+     */
     const recorderRef = useRef<ScriptProcessorNode | null>(null);
 
+    /**
+     * 音频上下文
+     */
     const contextRef = useRef<AudioContext | null>(null);
 
+    /**
+     * 轨迹
+     */
     const tracksRef = useRef<Array<MediaStreamTrack> | null>(null);
 
+    /**
+     * 音频数据
+     */
     const bufferRef = useRef<Array<number>>([]);
 
+    /**
+     * ing的回调函数
+     */
     const pendingFnRef = useRef(handlePending);
 
+    /**
+     * 失败的回调函数
+     */
     const cancelFnRef = useRef(handleCancel);
 
+    /**
+     * 是否已经准备好了的状态
+     */
     const [loading, setLoading] = useState(false);
 
+    /**
+     * 延时关闭的timer
+     */
     const closeTimer = useRef<number>();
 
+    /**
+     * 当前Hook是否被销毁的状态
+     */
     const destroy = useRef(false);
 
+    /**
+     * 让讲述者说会儿的timer
+     */
     const startTimer = useRef<number>();
 
+    /**
+     * 轮询的计时器
+     */
     const intervalTimer = useRef<number>();
 
+    /**
+     * websocket的实例
+     */
     const wsRef = useRef<WebSocket>();
 
+    /**
+     * 是否在录音中
+     */
     const pending = useRef(false);
+
+    /**
+     * 子线程的实例
+     */
+    const recorderWorker = useRef<Worker>();
 
     useLayoutEffect(() => {
         pendingFnRef.current = handlePending;
@@ -101,26 +129,6 @@ export const useMediaDevices = (
         }
     }, []);
 
-    /**
-     * 建立和子线程的通讯渠道
-     */
-    useLayoutEffect(() => {
-        const fn = (e: MessageEvent<{ type: "transform" | unknown; buffer: Array<number> }>) => {
-            switch (e.data.type) {
-                case "transform":
-                    bufferRef.current.push(...e.data.buffer);
-                    break;
-                default:
-                    break;
-            }
-        };
-
-        recorderWorker.addEventListener("message", fn);
-        return () => {
-            recorderWorker.removeEventListener("message", fn);
-        };
-    }, []);
-
     useEffect(() => {
         destroy.current = false;
         return () => {
@@ -131,11 +139,11 @@ export const useMediaDevices = (
     useEffect(() => {
         return () => {
             if (wsRef.current?.readyState === 1) {
-                wsRef.current.send('{"end": true}');
                 wsRef.current.close();
                 wsRef.current = undefined;
             }
 
+            recorderWorker.current?.terminate();
             tracksRef.current?.forEach((item) => item.stop());
             recorderRef.current && mediaStreamRef.current?.disconnect(recorderRef.current);
             recorderRef.current?.disconnect();
@@ -151,12 +159,11 @@ export const useMediaDevices = (
             startTimer.current = undefined;
             closeTimer.current = undefined;
             intervalTimer.current = undefined;
+            recorderWorker.current = undefined;
         };
     }, []);
 
     const fn = useCallback((status: boolean) => {
-        const lang = "cn";
-
         /**
          * 重置
          */
@@ -164,6 +171,7 @@ export const useMediaDevices = (
             tracksRef.current?.forEach((item) => item.stop());
             recorderRef.current && mediaStreamRef.current?.disconnect(recorderRef.current);
             recorderRef.current?.disconnect();
+            recorderWorker.current?.terminate();
             contextRef.current?.close();
             contextRef.current = null;
             tracksRef.current = null;
@@ -174,13 +182,33 @@ export const useMediaDevices = (
             intervalTimer.current && window.clearInterval(intervalTimer.current);
             startTimer.current = undefined;
             intervalTimer.current = undefined;
+            recorderWorker.current = undefined;
+        };
+
+        /**
+         * 创建子线程
+         */
+        const createChildThread = () => {
+            recorderWorker.current = new Worker(new URL("../video.worker.ts", import.meta.url));
+            //监听子线程发送过来的信息
+            recorderWorker.current.addEventListener(
+                "message",
+                (e: MessageEvent<{ type: "transform" | unknown; buffer: Array<number> }>) => {
+                    switch (e.data.type) {
+                        case "transform":
+                            bufferRef.current.push(...e.data.buffer);
+                            break;
+                        default:
+                            break;
+                    }
+                },
+            );
         };
 
         /**
          * 成功获取设备
          */
         const getDeviceSuccess = (stream: MediaStream) => {
-            console.log("111");
             /**
              * 音频轨迹存储起来
              * 在销毁时可以更快的终止
@@ -193,8 +221,9 @@ export const useMediaDevices = (
             mediaStream.connect(recorder);
             recorder.connect(context.destination);
             createWebSocket();
+            createChildThread();
             recorder.onaudioprocess = (e) => {
-                recorderWorker.postMessage({
+                recorderWorker.current?.postMessage({
                     type: "pending",
                     buffer: e.inputBuffer.getChannelData(0),
                 });
@@ -205,7 +234,6 @@ export const useMediaDevices = (
          * 获取设备失败
          */
         const getDeviceFail = () => {
-            console.log("222");
             alert("请求麦克风失败");
             reset();
             cancelFnRef.current();
@@ -232,6 +260,9 @@ export const useMediaDevices = (
             const str = CryptoJS.enc.Base64.stringify(data);
             return `{
             "time":"${decodeURIComponent(isoStr)}",
+            "enable_intermediate_result":"true",
+            "enable_punctuation_prediction":"true",
+            "enable_punctuation_prediction":"true",
             "sign":"${decodeURIComponent(str)}"}`;
         };
 
@@ -250,29 +281,6 @@ export const useMediaDevices = (
         };
 
         /**
-         * 过滤数据
-         */
-        const mapText = (data: LangData) => {
-            let str = "";
-
-            const rts = data.st.rt;
-            for (let i = 0; i < rts.length; i++) {
-                const wss = rts[i].ws;
-                for (let j = 0; j < wss.length; j++) {
-                    const cws = wss[j].cw;
-                    for (let k = 0; k < cws.length; k++) {
-                        str += cws[k].w;
-                    }
-                }
-            }
-
-            pendingFnRef.current({
-                value: str,
-                type: data.st.type,
-            });
-        };
-
-        /**
          * 当websocket返回的code不正常时
          */
         const handleMessageError = (res: ALiMessageProps) => {
@@ -288,6 +296,9 @@ export const useMediaDevices = (
                     break;
                 case 40_000_003:
                     alert("参数错误");
+                    break;
+                case 40_000_004:
+                    alert("长时间未发送消息，断开链接");
                     break;
                 case 40_000_005:
                     alert("并发请求过多");
@@ -316,8 +327,14 @@ export const useMediaDevices = (
                 case 40_020_106:
                     alert("调用时传递的Appkey和Token并非同一个账号UID所创建，导致不匹配");
                     break;
+                case 40_270_003:
+                    alert("音频格式不正确");
+                    break;
                 case 403:
                     alert("使用的Token无效，例如Token不存在或者已过期");
+                    break;
+                case 41_000_002:
+                    alert("appkey错误");
                     break;
                 case 41_000_003:
                     alert("无法获取该Appkey的路由信息");
@@ -345,13 +362,13 @@ export const useMediaDevices = (
             //code不正常 还要做些什么
             cancelFnRef.current();
             reset();
+            wsRef.current?.close();
         };
 
         /**
          * 接收到websocket返回的消息时
          */
-        const handleMessageStart = (res: StartMessage) => {
-            const code = res.header.status;
+        const handleMessageStart = () => {
             //开始轮询
             const startInterval = () => {
                 if (destroy.current || wsRef.current?.readyState !== 1) {
@@ -363,66 +380,46 @@ export const useMediaDevices = (
                 intervalTimer.current = window.setInterval(intervalSend, 40);
             };
 
-            if (code === 20_000_000) {
-                const nowTime = Date.now();
+            const nowTime = Date.now();
 
-                if (nowTime - openTimer > 500) {
+            if (nowTime - openTimer > 500) {
+                startInterval();
+            } else {
+                /**
+                 * 当讲述者说一会
+                 * 不然没有音频数据
+                 */
+                startTimer.current = window.setTimeout(() => {
+                    startTimer.current = undefined;
                     startInterval();
-                } else {
-                    /**
-                     * 当讲述者说一会
-                     * 不然没有音频数据
-                     */
-                    startTimer.current = window.setTimeout(() => {
-                        startTimer.current = undefined;
-                        startInterval();
-                    }, 500);
-                }
-                openTimer = 0;
-                return;
+                }, 500);
             }
-            handleMessageError(res);
-            cancelFnRef.current();
-            wsRef.current?.close();
+            openTimer = 0;
         };
 
-        // const handleMessage = (e: MessageEvent<string>) => {
-        //     console.log("message", e);
-        //     const res = JSON.parse(e.data) as {
-        //         action: "started" | "result" | "error";
-        //         code: string;
-        //         desc: string;
-        //         sid: string;
-        //         data?: string;
-        //     };
+        const handleMessageChange = (res: ChangeMessage) => {
+            pendingFnRef.current({
+                value: res.payload.result,
+                type: "1",
+            });
+        };
 
-        //     const data = res.data ? (JSON.parse(res.data) as Record<"cn", LangData>) : undefined;
+        const handleMessageEnd = (res: EndMessage) => {
+            pendingFnRef.current({
+                value: res.payload.result,
+                type: "0",
+            });
+        };
 
-        //     if (res.code !== "0") {
-        //         handleMessageError(res);
-        //         return;
-        //     }
-
-        //     switch (res.action) {
-        //         case "result":
-        //             if (data) {
-        //                 mapText(data[lang]);
-        //             }
-        //             break;
-        //         case "error":
-        //             handleMessageError(res);
-        //             break;
-        //     }
-        // };
+        const handleMessageCompleted = () => {
+            reset();
+        };
 
         /**
          * 监听onerror事件
          */
         const handleError = () => {
-            //发生错误的时候会自动断开链接
-
             cancelFnRef.current();
-
             setLoading(false);
             reset();
             alert("链接失败,请检查网络");
@@ -431,8 +428,12 @@ export const useMediaDevices = (
         /**
          * 监听onclose事件
          */
-        const handleClose = (e) => {
+        const handleClose = (e: CloseEvent) => {
             console.log("onclose", e);
+            if (e.code === 4000) {
+                alert("长时间没有音频数据");
+                cancelFnRef.current();
+            }
             reset();
         };
 
@@ -446,13 +447,33 @@ export const useMediaDevices = (
 
             //当接受到消息时
             ws.onmessage = (e: MessageEvent<string>) => {
-                console.log("message", e);
                 // 接收到websocket返回的消息时
                 const data = JSON.parse(e.data) as ALiMessageProps;
-
-                switch (data.header.namespace) {
-                    case "SpeechTranscriber":
-                        handleMessageStart(data);
+                let typeData: ALiMessageProps | null = null;
+                const code = data.header.status;
+                if (code !== 20_000_000) {
+                    handleMessageError(data);
+                    return;
+                }
+                switch (data.header.name) {
+                    case "TranscriptionStarted":
+                        handleMessageStart();
+                        return;
+                    case "SentenceBegin":
+                        return;
+                    case "TranscriptionResultChanged":
+                        typeData = data as ChangeMessage;
+                        handleMessageChange(typeData);
+                        return;
+                    case "SentenceEnd":
+                        typeData = data as EndMessage;
+                        handleMessageEnd(typeData);
+                        return;
+                    case "TranscriptionCompleted":
+                        handleMessageCompleted();
+                        return;
+                    default:
+                        console.log("未知消息类型");
                         return;
                 }
             };
@@ -474,7 +495,6 @@ export const useMediaDevices = (
                 .catch(getDeviceFail);
         };
 
-        console.log("status", status);
         // 当开始录音时
         if (status) {
             closeTimer.current && window.clearTimeout(closeTimer.current);
@@ -487,7 +507,6 @@ export const useMediaDevices = (
 
         if (pending.current) {
             if (wsRef.current?.readyState === 1) {
-                wsRef.current.send('{"end": true}');
                 wsRef.current.close();
             }
 
