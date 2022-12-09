@@ -271,7 +271,8 @@ export const useMediaDevices = (
         /**
          * 当WebSocket创建成功时
          */
-        const handleOpen = () => {
+        const handleOpen = (e) => {
+            console.log("open", e);
             setLoading(false);
             if (wsRef.current?.readyState !== 1) {
                 return;
@@ -447,6 +448,8 @@ export const useMediaDevices = (
 
             //当接受到消息时
             ws.onmessage = (e: MessageEvent<string>) => {
+                console.log("message", e);
+
                 // 接收到websocket返回的消息时
                 const data = JSON.parse(e.data) as ALiMessageProps;
                 let typeData: ALiMessageProps | null = null;
