@@ -6,7 +6,7 @@
  */
 /* <------------------------------------ **** DEPENDENCE IMPORT START **** ------------------------------------ */
 /** This section will include all the necessary dependence for this tsx file */
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useRef, useState } from "react";
 import { comms } from ".";
 import { Group } from "./Components/Group";
 import Item from "./item";
@@ -36,20 +36,9 @@ const Temp: React.FC = () => {
         return data;
     });
 
-    const [showData, setShowData] = useState(() => {
-        const rows = comms.config.options?.[0] ?? [];
-        const cols = comms.config.options?.[1] ?? [];
+    const [activeCode, setActiveCode] = useState<string>();
 
-        const data: Record<string, boolean> = {};
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            for (let j = 0; j < cols.length; j++) {
-                const col = cols[j];
-                data[`${row.code as string}_${col.code as string}`] = false;
-            }
-        }
-        return data;
-    });
+    const timer = useRef<number>();
 
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
@@ -58,6 +47,12 @@ const Temp: React.FC = () => {
     useEffect(() => {
         comms.state = state;
     }, [state]);
+
+    useEffect(() => {
+        return () => {
+            timer.current && window.clearTimeout(timer.current);
+        };
+    }, []);
 
     /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
     /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
@@ -87,20 +82,27 @@ const Temp: React.FC = () => {
                                             isOnly={cols.length < 2}
                                             key={item.code}
                                             show={
-                                                showData[
-                                                    `${row.code as string}_${item.code as string}`
-                                                ]
+                                                activeCode ===
+                                                `${row.code as string}_${item.code as string}`
                                             }
                                             setShow={(res) => {
                                                 const itemKey = `${row.code as string}_${
                                                     item.code as string
                                                 }`;
-                                                setShowData((pre) => {
-                                                    const data = { ...pre };
-                                                    for (const key in pre) {
-                                                        data[key] = key === itemKey ? res : false;
+                                                timer.current && window.clearTimeout(timer.current);
+                                                setActiveCode((pre) => {
+                                                    if (typeof pre === "undefined") {
+                                                        return itemKey;
                                                     }
-                                                    return { ...data };
+
+                                                    timer.current = window.setTimeout(() => {
+                                                        timer.current = undefined;
+                                                        if (res) {
+                                                            setActiveCode(itemKey);
+                                                        }
+                                                    }, 1000);
+
+                                                    return undefined;
                                                 });
                                             }}
                                             defaultValue={state[row.code][item.code]}
