@@ -78,24 +78,17 @@ const Temp: React.FC = () => {
                                 return (
                                     <Fragment key={index}>
                                         <Item
-                                            id={item.code}
                                             data={{ ...item }}
                                             isOnly={cols.length < 2}
                                             key={item.code}
-                                            show={
-                                                activeCode ===
-                                                `${row.code as string}_${item.code as string}`
-                                            }
+                                            show={activeCode === `${row.code}_${item.code}`}
                                             setShow={(res) => {
-                                                const itemKey = `${row.code as string}_${
-                                                    item.code as string
-                                                }`;
-                                                timer.current && window.clearTimeout(timer.current);
+                                                const itemKey = `${row.code}_${item.code}`;
                                                 setActiveCode((pre) => {
-                                                    if (typeof pre === "undefined") {
+                                                    if (pre === undefined && !timer.current) {
                                                         return itemKey;
                                                     }
-
+                                                    window.clearTimeout(timer.current);
                                                     timer.current = window.setTimeout(() => {
                                                         timer.current = undefined;
                                                         if (res) {
