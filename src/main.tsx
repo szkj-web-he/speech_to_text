@@ -64,12 +64,11 @@ const Temp: React.FC = () => {
                             defaultValue={state[item.code]}
                             show={activeCode === item.code}
                             setShow={(res) => {
-                                timer.current && window.clearTimeout(timer.current);
                                 setActiveCode((pre) => {
-                                    if (typeof pre === "undefined") {
+                                    if (pre === undefined && !timer.current) {
                                         return item.code;
                                     }
-
+                                    window.clearTimeout(timer.current);
                                     timer.current = window.setTimeout(() => {
                                         timer.current = undefined;
                                         if (res) {

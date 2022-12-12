@@ -220,7 +220,9 @@ const Temp: React.FC<TempProps> = ({ show, setShow, data, defaultValue, setValue
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={handleStart}
                             style={
-                                !show && !isPending && !delayLoading ? undefined : { opacity: "0" }
+                                !show && !isPending && !delayLoading
+                                    ? undefined
+                                    : { opacity: "0", pointerEvents: "none" }
                             }
                         >
                             <Mike className="btn_icon" />
