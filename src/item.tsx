@@ -137,6 +137,7 @@ const Temp: React.FC<TempProps> = ({ show, setShow, data, defaultValue, setValue
             fnRef.current(show);
         }
         showRef.current = show;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [show]);
 
     const handleStart = () => {
@@ -153,7 +154,11 @@ const Temp: React.FC<TempProps> = ({ show, setShow, data, defaultValue, setValue
     /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
     /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
     /************* This section will include this component general function *************/
-
+    useEffect(() => {
+        return () => {
+            messageData.current = undefined;
+        };
+    }, [show]);
     useEffect(() => {
         destroy.current = false;
         return () => {
