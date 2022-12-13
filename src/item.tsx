@@ -156,6 +156,12 @@ const Temp: React.FC<TempProps> = ({ show, setShow, data, defaultValue, setValue
     /************* This section will include this component general function *************/
 
     useEffect(() => {
+        return () => {
+            messageData.current = undefined;
+        };
+    }, [show]);
+
+    useEffect(() => {
         destroy.current = false;
         return () => {
             destroy.current = true;
