@@ -148,6 +148,7 @@ export const useMediaDevices = (
     useEffect(() => {
         return () => {
             if (wsRef.current?.readyState === 1) {
+                console.log("生命周期终止了");
                 wsRef.current.close();
                 wsRef.current = undefined;
             }
@@ -198,6 +199,7 @@ export const useMediaDevices = (
          * 创建子线程
          */
         const createChildThread = () => {
+            console.log("创建子线程");
             recorderWorker.current = new Worker(new URL("../video.worker.ts", import.meta.url));
             //监听子线程发送过来的信息
             recorderWorker.current.addEventListener(
@@ -285,6 +287,7 @@ export const useMediaDevices = (
          * 当WebSocket创建成功时
          */
         const handleOpen = () => {
+            console.log("建立链接");
             setLoading(false);
             if (wsRef.current?.readyState !== 1) {
                 return;
@@ -375,6 +378,7 @@ export const useMediaDevices = (
             //code不正常 还要做些什么
             cancelFnRef.current();
             reset();
+            console.log("报错终止了");
             wsRef.current?.close();
         };
 
@@ -431,7 +435,8 @@ export const useMediaDevices = (
         /**
          * 监听onerror事件
          */
-        const handleError = () => {
+        const handleError = (e) => {
+            console.log("error", e);
             cancelFnRef.current();
             setLoading(false);
             reset();
@@ -442,6 +447,7 @@ export const useMediaDevices = (
          * 监听onclose事件
          */
         const handleClose = (e: CloseEvent) => {
+            console.log("close", e);
             if (e.code === 4000) {
                 alert("长时间没有音频数据");
                 cancelFnRef.current();
@@ -453,12 +459,14 @@ export const useMediaDevices = (
          * 创建WebSocket
          */
         const createWebSocket = () => {
+            console.log("创建websocket");
             const ws = (wsRef.current = new WebSocket(`wss://${mainDomain}${url}`));
             //当建立链接时
             ws.onopen = handleOpen;
 
             //当接受到消息时
             ws.onmessage = (e: MessageEvent<string>) => {
+                console.log("message", e);
                 // 接收到websocket返回的消息时
                 const data = JSON.parse(e.data) as ALiMessageProps;
                 let typeData: ALiMessageProps | null = null;
@@ -506,7 +514,7 @@ export const useMediaDevices = (
                 .then(getDeviceSuccess)
                 .catch(getDeviceFail);
         };
-
+        console.log("是否开始录音", status);
         // 当开始录音时
         if (status) {
             closeTimer.current && window.clearTimeout(closeTimer.current);
@@ -519,6 +527,7 @@ export const useMediaDevices = (
 
         if (pending.current) {
             if (wsRef.current?.readyState === 1) {
+                console.log("我这里终止了", status);
                 wsRef.current.close();
             }
 
