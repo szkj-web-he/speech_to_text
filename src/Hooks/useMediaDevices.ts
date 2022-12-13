@@ -3,36 +3,21 @@
  */
 import CryptoJS from "crypto-js";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { CustomNavigator } from "../type";
-interface LangData {
-    st: {
-        bg: string;
-        ed: string;
-        type: "1" | "0";
-        rt: Array<{
-            ws: Array<{
-                cw: Array<{
-                    w: string;
-                    wp: "n" | "s" | "p";
-                }>;
-                wb: number;
-                we: number;
-            }>;
-        }>;
-    };
-}
+import { ALiMessageProps, CustomNavigator } from "../type";
+import { ChangeMessage, EndMessage } from "./../type";
+
 /**
  * 阿里
  */
-// const mainDomain = "api.dev.datareachable.net/datacoll/v2/dev/";
-// // const mainDomain = "192.168.10.5:3000/";
-// const url = "ws/xfyun/rtasr/v1";
+const mainDomain = "api.dev.datareachable.net/datacoll/v2/dev/";
+// const mainDomain = "192.168.10.5:3000/";
+const url = "ws/xfyun/rtasr/v1";
 
 /**
  * 讯飞
  */
-const mainDomain = "";
-const url = "rtasr.xfyun.cn/v1/ws";
+// const mainDomain = "";
+// const url = "rtasr.xfyun.cn/v1/ws";
 
 /**
  * 获取媒体权限
@@ -163,7 +148,6 @@ export const useMediaDevices = (
     useEffect(() => {
         return () => {
             if (wsRef.current?.readyState === 1) {
-                wsRef.current.send('{"end": true}');
                 wsRef.current.close();
                 wsRef.current = undefined;
             }
@@ -189,7 +173,6 @@ export const useMediaDevices = (
     }, []);
 
     const fn = useCallback((status: boolean) => {
-        const lang = "cn";
         /**
          * 重置
          */
@@ -284,49 +267,19 @@ export const useMediaDevices = (
         };
 
         const getParams = () => {
-            // const isoStr = new Date().toISOString();
-            // const key = "PRder3XcU7VmOSdB";
-            // const data = CryptoJS.HmacSHA1(isoStr, key);
-            // const str = CryptoJS.enc.Base64.stringify(data);
-            // return `{
-            // "time":"${decodeURIComponent(isoStr)}",
-            // "enable_intermediate_result":"true",
-            // "enable_punctuation_prediction":"true",
-            // "enable_punctuation_prediction":"true",
-            // "sign":"${decodeURIComponent(str)}"}`;
-
-            const appId = "4a6a32c6";
-            const secretKey = "ebbe49206100e5e36d6821e70704261f";
-            const ts = Math.floor(new Date().getTime() / 1000).toString(); //new Date().getTime()/1000+'';
-            const signa = CryptoJS.MD5(appId + ts).toString();
-            const signatureSha = CryptoJS.HmacSHA1(signa, secretKey);
-            let signature: string = CryptoJS.enc.Base64.stringify(signatureSha);
-            signature = encodeURIComponent(signature);
-            return `?appid=${appId}&ts=${ts}&signa=${signature}`;
+            const isoStr = new Date().toISOString();
+            const key = "PRder3XcU7VmOSdB";
+            const data = CryptoJS.HmacSHA1(isoStr, key);
+            const str = CryptoJS.enc.Base64.stringify(data);
+            return `{
+              "time":"${decodeURIComponent(isoStr)}",
+              "enable_intermediate_result":"true",
+              "enable_punctuation_prediction":"true",
+              "enable_punctuation_prediction":"true",
+              "sign":"${decodeURIComponent(str)}"}`;
         };
 
-        /**
-         * 过滤数据
-         */
-        const mapText = (data: LangData) => {
-            let str = "";
-
-            const rts = data.st.rt;
-            for (let i = 0; i < rts.length; i++) {
-                const wss = rts[i].ws;
-                for (let j = 0; j < wss.length; j++) {
-                    const cws = wss[j].cw;
-                    for (let k = 0; k < cws.length; k++) {
-                        str += cws[k].w;
-                    }
-                }
-            }
-
-            pendingFnRef.current({
-                value: str,
-                type: data.st.type,
-            });
-        };
+        let openTimer = 0;
 
         /**
          * 当WebSocket创建成功时
@@ -336,54 +289,93 @@ export const useMediaDevices = (
             if (wsRef.current?.readyState !== 1) {
                 return;
             }
-            handleMessageStart();
+            wsRef.current?.send(getParams());
+            openTimer = Date.now();
         };
 
         /**
          * 当websocket返回的code不正常时
          */
-        const handleMessageError = (res: {
-            action: "started" | "result" | "error";
-            code: string;
-            desc: string;
-            sid: string;
-            data?: string;
-        }) => {
-            switch (res.code) {
-                case "10105":
-                    alert("未授权许可");
+        const handleMessageError = (res: ALiMessageProps) => {
+            switch (res.header.status) {
+                case 40_000_000:
+                    alert("参数不正确");
                     break;
-                case "10106":
+                case 40_000_001:
                     alert("参数错误");
                     break;
-                case "10107":
+                case 40_000_002:
+                    alert("发送的message错误");
+                    break;
+                case 40_000_003:
                     alert("参数错误");
                     break;
-                case "10110":
-                    alert("未授权许可");
+                case 40_000_004:
+                    alert("长时间未发送消息，断开链接");
                     break;
-                case "10202":
-                    alert("请检查网络是否正常,稍后请重试");
+                case 40_000_005:
+                    alert("并发请求过多");
                     break;
-                case "10204":
-                    alert("请检查网络是否正常,稍后请重试");
+                case 40_000_009:
+                    alert("错误的消息头");
                     break;
-                case "10205":
-                    alert("请检查网络是否正常,稍后请重试");
+                case 40_000_010:
+                    alert("试用期已结束，并且未开通商用版、或账号欠费");
                     break;
-                case "16003":
-                    alert("基础组件异常,稍后请重试");
+                case 40_010_001:
+                    alert("不支持的接口或参数");
                     break;
-                case "10800":
-                    alert("超过授权的连接数,请联系开发人员");
+                case 40_010_003:
+                    alert("客户端侧通用错误码");
+                    break;
+                case 40_010_004:
+                    alert("在请求处理完成前客户端主动结束");
+                    break;
+                case 40_010_005:
+                    alert("客户端发送了当前不支持的消息指令");
+                    break;
+                case 40_020_105:
+                    alert("使用了不存在的Appkey");
+                    break;
+                case 40_020_106:
+                    alert("调用时传递的Appkey和Token并非同一个账号UID所创建，导致不匹配");
+                    break;
+                case 40_270_003:
+                    alert("音频格式不正确");
+                    break;
+                case 403:
+                    alert("使用的Token无效，例如Token不存在或者已过期");
+                    break;
+                case 41_000_002:
+                    alert("appkey错误");
+                    break;
+                case 41_000_003:
+                    alert("无法获取该Appkey的路由信息");
+                    break;
+                case 41_010_101:
+                    alert("不支持的采样率格式");
+                    break;
+                case 41_040_201:
+                    alert("获取客户端发送的数据超时失败");
+                    break;
+                case 50_000_000:
+                    alert("受机器负载、网络等因素导致的异常，通常为偶发出现");
+                    break;
+                case 50_000_001:
+                    alert("受机器负载、网络等因素导致的异常，通常为偶发出现");
+                    break;
+                case 52_010_001:
+                    alert("受机器负载、网络等因素导致的异常，通常为偶发出现");
                     break;
                 default:
                     alert("发生未知错误,稍后请重试");
                     break;
             }
+
             //code不正常 还要做些什么
             cancelFnRef.current();
             reset();
+            wsRef.current?.close();
         };
 
         /**
@@ -401,29 +393,40 @@ export const useMediaDevices = (
                 intervalTimer.current = window.setInterval(intervalSend, 40);
             };
 
-            /**
-             * 当讲述者说一会
-             * 不然没有音频数据
-             */
-            startTimer.current = window.setTimeout(() => {
-                startTimer.current = undefined;
+            const nowTime = Date.now();
+
+            if (nowTime - openTimer > 500) {
                 startInterval();
-            }, 500);
+            } else {
+                /**
+                 * 当讲述者说一会
+                 * 不然没有音频数据
+                 */
+                startTimer.current = window.setTimeout(() => {
+                    startTimer.current = undefined;
+                    startInterval();
+                }, 500);
+            }
+            openTimer = 0;
         };
 
-        // const handleMessageChange = (res: ChangeMessage) => {
-        //     pendingFnRef.current({
-        //         value: res.payload.result,
-        //         type: "1",
-        //     });
-        // };
+        const handleMessageChange = (res: ChangeMessage) => {
+            pendingFnRef.current({
+                value: res.payload.result,
+                type: "1",
+            });
+        };
 
-        // const handleMessageEnd = (res: EndMessage) => {
-        //     pendingFnRef.current({
-        //         value: res.payload.result,
-        //         type: "0",
-        //     });
-        // };
+        const handleMessageEnd = (res: EndMessage) => {
+            pendingFnRef.current({
+                value: res.payload.result,
+                type: "0",
+            });
+        };
+
+        const handleMessageCompleted = () => {
+            reset();
+        };
 
         /**
          * 监听onerror事件
@@ -438,11 +441,34 @@ export const useMediaDevices = (
         /**
          * 监听onclose事件
          */
-        const handleClose = () => {
-            // if (e.code === 4000) {
-            //     alert("长时间没有音频数据");
-            //     cancelFnRef.current();
-            // }
+        const handleClose = (e: CloseEvent) => {
+            if (e.code === 4000) {
+                alert("长时间没有音频数据");
+                cancelFnRef.current();
+            }
+            switch (e.code) {
+                case 4000:
+                    alert("长时间没有音频数据");
+                    cancelFnRef.current();
+                    break;
+                case 3000:
+                    alert("时间与服务器时间不匹配，请确定时间");
+                    cancelFnRef.current();
+                    break;
+                case 1003:
+                    alert("数据格式不对");
+                    cancelFnRef.current();
+                    break;
+                case 1011:
+                    alert("服务器出了点问题，请稍后再试");
+                    cancelFnRef.current();
+                    break;
+                case 1014:
+                    alert("无法建立链接，请稍后再试");
+                    cancelFnRef.current();
+                    break;
+            }
+
             reset();
         };
 
@@ -450,39 +476,40 @@ export const useMediaDevices = (
          * 创建WebSocket
          */
         const createWebSocket = () => {
-            const ws = (wsRef.current = new WebSocket(`wss://${mainDomain}${url}${getParams()}`));
+            const ws = (wsRef.current = new WebSocket(`wss://${mainDomain}${url}`));
             //当建立链接时
             ws.onopen = handleOpen;
 
             //当接受到消息时
             ws.onmessage = (e: MessageEvent<string>) => {
                 // 接收到websocket返回的消息时
-                const res = JSON.parse(e.data) as {
-                    action: "started" | "result" | "error";
-                    code: string;
-                    desc: string;
-                    sid: string;
-                    data?: string;
-                };
-
-                const data = res.data
-                    ? (JSON.parse(res.data) as Record<"cn", LangData>)
-                    : undefined;
-
-                if (res.code !== "0") {
-                    handleMessageError(res);
+                const data = JSON.parse(e.data) as ALiMessageProps;
+                let typeData: ALiMessageProps | null = null;
+                const code = data.header.status;
+                if (code !== 20_000_000) {
+                    handleMessageError(data);
                     return;
                 }
-
-                switch (res.action) {
-                    case "result":
-                        if (data) {
-                            mapText(data[lang]);
-                        }
-                        break;
-                    case "error":
-                        handleMessageError(res);
-                        break;
+                switch (data.header.name) {
+                    case "TranscriptionStarted":
+                        handleMessageStart();
+                        return;
+                    case "SentenceBegin":
+                        return;
+                    case "TranscriptionResultChanged":
+                        typeData = data as ChangeMessage;
+                        handleMessageChange(typeData);
+                        return;
+                    case "SentenceEnd":
+                        typeData = data as EndMessage;
+                        handleMessageEnd(typeData);
+                        return;
+                    case "TranscriptionCompleted":
+                        handleMessageCompleted();
+                        return;
+                    default:
+                        console.log("未知消息类型");
+                        return;
                 }
             };
 
@@ -502,7 +529,6 @@ export const useMediaDevices = (
                 .then(getDeviceSuccess)
                 .catch(getDeviceFail);
         };
-
         // 当开始录音时
         if (status) {
             closeTimer.current && window.clearTimeout(closeTimer.current);
