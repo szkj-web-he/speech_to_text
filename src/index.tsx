@@ -2,7 +2,7 @@ import React from "react";
 import "./font.scss";
 import "./style.scss";
 
-import { ConfigYML, PluginComms } from "@possie-engine/dr-plugin-sdk";
+import { ConfigYML, PluginComms } from "@datareachable/dr-plugin-sdk";
 import { ScrollComponent } from "./Components/Scroll";
 import Header from "./header";
 import MainContent from "./main";
@@ -21,7 +21,7 @@ export const comms = new PluginComms({
         optionsInstruction?: string;
         options?: Array<OptionProps>;
     };
-    state: unknown;
+    state: Record<string, string>;
     renderOnReady: (res: React.ReactNode) => void;
 };
 

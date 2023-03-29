@@ -21,9 +21,25 @@ const Temp: React.FC = () => {
 
     const [state, setState] = useState(() => {
         const arr = comms.config.options ?? [];
+
+        /**
+         * 获取回溯的数据 start
+         */
+        const commsData = comms.state;
+        const transformData: Record<string, string> = {};
+        for (const key in commsData) {
+            const keyVal = key.includes("#") ? key.split("#")[1] : key;
+            transformData[keyVal] = commsData[key];
+        }
+
+        /**
+         * 获取回溯的数据 end
+         */
+
         const data: Record<string, string> = {};
+
         for (let i = 0; i < arr.length; i++) {
-            data[arr[i].code] = "";
+            data[arr[i].code] = transformData[arr[i].code] ?? "";
         }
         return data;
     });
@@ -34,7 +50,7 @@ const Temp: React.FC = () => {
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
-
+    console.log("答案回溯", JSON.stringify(comms.state));
     useEffect(() => {
         comms.state = state;
     }, [state]);

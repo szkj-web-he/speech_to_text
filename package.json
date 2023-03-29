@@ -59,7 +59,7 @@
         "yaml-loader": "^0.6.0"
     },
     "dependencies": {
-        "@possie-engine/dr-plugin-sdk": "^0.1.4",
+        "@datareachable/dr-plugin-sdk": "^0.1.6",
         "browserify": "^17.0.0",
         "crypto-js": "^4.1.1",
         "eruda": "^2.5.0",
