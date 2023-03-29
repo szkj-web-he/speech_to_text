@@ -23,13 +23,35 @@ const Temp: React.FC = () => {
         const rows = comms.config.options?.[0] ?? [];
         const cols = comms.config.options?.[1] ?? [];
 
+        /**
+         * 获取回溯的数据 start
+         */
+        const commsData = comms.state;
+        const transformData: Record<string, Record<string, string>> = {};
+        for (const key in commsData) {
+            const keyVal = key.includes("#") ? key.split("#")[1] : key;
+
+            if (keyVal.includes("_")) {
+                const keySplit = keyVal.split("_");
+                const rowCode = keySplit[0];
+                const colCode = keySplit[1];
+                transformData[rowCode] = Object.assign({}, transformData[rowCode], {
+                    [colCode]: commsData[key],
+                });
+            }
+        }
+
+        /**
+         * 获取回溯的数据 end
+         */
+
         const data: Record<string, Record<string, string>> = {};
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             const rowData: Record<string, string> = {};
             for (let j = 0; j < cols.length; j++) {
                 const col = cols[j];
-                rowData[col.code] = "";
+                rowData[col.code] = transformData?.[row.code]?.[col.code] ?? "";
             }
             data[row.code] = rowData;
         }
@@ -45,7 +67,7 @@ const Temp: React.FC = () => {
     /************* This section will include this component parameter *************/
 
     useEffect(() => {
-        comms.state = state;
+        comms.state = state as unknown as Record<string, string>;
     }, [state]);
 
     useEffect(() => {

@@ -14,5 +14,11 @@ options:
             { "code": "6", "content": "对于profile,有什么想说的吗" },
             { "code": "7", "content": "对于project manage,有什么想说的吗" },
         ],
-        [{ "code": "a", "content": "优点：" }, { "code": "b", "content": "缺点：" }],
+        [
+            { "code": "a", "content": "优点：" },
+            { "code": "b", "content": "缺点：" },
+            { "code": "c", "content": "最不喜欢的地方：" },
+            { "code": "d", "content": "最喜欢的地方：" },
+            { "code": "e", "content": "用了后，心情怎么样：" },
+        ],
     ]

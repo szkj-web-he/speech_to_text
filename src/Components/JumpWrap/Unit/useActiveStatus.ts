@@ -58,7 +58,7 @@ export const useActiveStatus = (
         }
 
         const arr = getElements(id);
-        let n = -1;
+        let n = arr.length;
         for (let i = 0; i < arr.length; ) {
             const item = arr[i];
             const marginTop = sameTop(item, scrollBody);
@@ -78,6 +78,7 @@ export const useActiveStatus = (
             ),
         );
         activeIndex.current = n;
+
         setTopActive(n > 0);
         setBottomActive(n < arr.length - 1);
         // eslint-disable-next-line react-hooks/exhaustive-deps
