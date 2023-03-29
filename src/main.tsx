@@ -50,7 +50,7 @@ const Temp: React.FC = () => {
     /* <------------------------------------ **** STATE END **** ------------------------------------ */
     /* <------------------------------------ **** PARAMETER START **** ------------------------------------ */
     /************* This section will include this component parameter *************/
-    console.log("答案回溯", JSON.stringify(comms.state));
+
     useEffect(() => {
         comms.state = state;
     }, [state]);
