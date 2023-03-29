@@ -9,7 +9,7 @@ import { ChangeMessage, EndMessage } from "./../type";
 /**
  * 阿里
  */
-const mainDomain = "api.dev.datareachable.net/datacoll/v2/dev/";
+const mainDomain = "dev-api.datareachable.cn/datacoll/v2/dev/";
 // const mainDomain = "192.168.10.5:3000/";
 const url = "ws/xfyun/rtasr/v1";
 
@@ -268,7 +268,7 @@ export const useMediaDevices = (
 
         const getParams = () => {
             const isoStr = new Date().toISOString();
-            const key = "PRder3XcU7VmOSdB";
+            const key = "q5jlwto9Y4hstUpK";
             const data = CryptoJS.HmacSHA1(isoStr, key);
             const str = CryptoJS.enc.Base64.stringify(data);
             return `{
