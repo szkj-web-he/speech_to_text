@@ -54,15 +54,16 @@ const JumpWrap: React.FC<ScrollProps> = ({ children, style, ...props }) => {
 
     useEffect(() => {
         if (!loading) {
-            update();
+            update.current();
         }
-    }, [loading, update]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [loading]);
 
     useEffect(() => {
         let timer: null | number = null;
         const mainFn = () => {
             timer && window.clearTimeout(timer);
-            timer = window.setTimeout(update);
+            timer = window.setTimeout(update.current);
         };
 
         window.addEventListener("resize", mainFn);
@@ -75,44 +76,33 @@ const JumpWrap: React.FC<ScrollProps> = ({ children, style, ...props }) => {
     /* <------------------------------------ **** PARAMETER END **** ------------------------------------ */
     /* <------------------------------------ **** FUNCTION START **** ------------------------------------ */
     /************* This section will include this component general function *************/
-    // getElements
     const jumpTo = (n: number) => {
         const scrollBody = getScrollBody(ref.current);
         if (!scrollBody) {
             return;
         }
-        if (n < 0) {
-            n = 0;
-        }
 
         const arr = getElements(id);
 
-        if (n >= arr.length) {
-            n = arr.length - 1;
+        let index = n;
+        if (index < 0) {
+            index = 0;
+        } else if (index >= arr.length) {
+            index = arr.length - 1;
         }
-        let toEl: HTMLElement | null = null;
-        for (let i = 0; i < arr.length; ) {
-            const el = arr[i];
-            const index = Number(el.getAttribute("data-index"));
-            if (index === n) {
-                toEl = el;
-                i = arr.length;
-            } else {
-                ++i;
-            }
+
+        const toEl = document.querySelector(`.${id}[data-index="${index}"]`);
+        if (toEl instanceof HTMLElement) {
+            scrollBody.scrollTo({
+                top: findParent(toEl, scrollBody),
+                behavior: "smooth",
+            });
         }
-        if (!toEl) {
-            return;
-        }
-        scrollBody.scrollTo({
-            top: findParent(toEl, scrollBody),
-            behavior: "smooth",
-        });
     };
 
     const handleScroll = () => {
         timer.current && window.clearTimeout(timer.current);
-        timer.current = window.setTimeout(update, 50);
+        timer.current = window.setTimeout(update.current, 50);
     };
 
     /* <------------------------------------ **** FUNCTION END **** ------------------------------------ */

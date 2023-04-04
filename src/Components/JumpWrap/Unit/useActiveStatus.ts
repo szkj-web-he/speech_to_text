@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getScrollBody } from "./getScrollBody";
 
 type RefObject<T> = React.MutableRefObject<T>;
@@ -9,7 +9,7 @@ interface ActiveStatusResult {
     bottomActive: boolean;
     activeIndex: RefObject<number>;
     isBottom: boolean;
-    update: () => void;
+    update: { current: () => void };
 }
 
 export const getElements = (id: string): HTMLElement[] => {
@@ -28,12 +28,50 @@ export const getElements = (id: string): HTMLElement[] => {
 };
 
 /**
- * 第一个node界定啊的top距离和第二个node节点的top距离之前的差值
+ * 过滤group 看看哪个group的可见部分相对比较多
+ * @param ref
+ * @param id
+ * @returns
  */
-export const sameTop = (el: HTMLElement, parent: HTMLElement): number => {
-    const elRect = el.getBoundingClientRect();
-    const parentRect = parent.getBoundingClientRect();
-    return elRect.top - parentRect.top;
+const filterGroup = (arr: HTMLElement[], scrollBody: HTMLElement): number => {
+    const bodyRect = scrollBody.getBoundingClientRect();
+    let activeElement:
+        | {
+              client: number;
+              index: number;
+          }
+        | undefined = undefined;
+    for (let i = 0; i < arr.length; i++) {
+        const item = arr[i];
+        const rect = item.getBoundingClientRect();
+
+        if (rect.bottom > 0 && rect.top < bodyRect.bottom) {
+            /**可视高度 */
+            let clientHeight = rect.height;
+            if (rect.top < 0) {
+                clientHeight += rect.top;
+            }
+
+            if (rect.bottom > bodyRect.bottom) {
+                clientHeight += bodyRect.bottom - rect.bottom;
+            }
+            /**可视高度 end */
+            if (activeElement) {
+                if (clientHeight > activeElement.client) {
+                    activeElement = {
+                        client: clientHeight,
+                        index: i,
+                    };
+                }
+            } else {
+                activeElement = {
+                    client: clientHeight,
+                    index: i,
+                };
+            }
+        }
+    }
+    return activeElement ? activeElement.index : arr.length - 1;
 };
 
 export const useActiveStatus = (
@@ -46,47 +84,46 @@ export const useActiveStatus = (
     const activeIndex = useRef(0);
     const [isBottom, setIsBottom] = useState(false);
 
-    const update = useCallback(() => {
+    const idRef = useRef(id);
+    idRef.current = id;
+
+    const update = useRef(() => {
         if (!ref.current) {
             return;
         }
 
         const scrollBody = getScrollBody(ref.current);
+        /**
+         * 至少可以滚动50个像素
+         */
+        if (scrollBody && scrollBody.scrollHeight - scrollBody.offsetHeight > 50) {
+            const arr = getElements(idRef.current);
+            setShow(true);
+            if (scrollBody.scrollTop === 0) {
+                activeIndex.current = 0;
+                setTopActive(false);
+                setBottomActive(true);
+                setIsBottom(false);
+            } else {
+                activeIndex.current = filterGroup(arr, scrollBody);
 
-        if (!scrollBody) {
+                setTopActive(activeIndex.current > 0);
+                setBottomActive(activeIndex.current < arr.length - 1);
+                setIsBottom(
+                    scrollBody.scrollHeight <= scrollBody.offsetHeight + scrollBody.scrollTop ||
+                        activeIndex.current === arr.length - 1,
+                );
+            }
             return;
         }
 
-        const arr = getElements(id);
-        let n = arr.length;
-        for (let i = 0; i < arr.length; ) {
-            const item = arr[i];
-            const marginTop = sameTop(item, scrollBody);
-
-            if (marginTop > -5) {
-                n = i;
-                i = arr.length;
-            } else if (marginTop < 0) {
-                ++i;
-            }
-        }
-        setShow(!!(scrollBody && scrollBody.offsetHeight < scrollBody.scrollHeight));
-        setIsBottom(
-            !!(
-                scrollBody &&
-                scrollBody.offsetHeight + scrollBody.scrollTop >= scrollBody.scrollHeight
-            ),
-        );
-        activeIndex.current = n;
-
-        setTopActive(n > 0);
-        setBottomActive(n < arr.length - 1);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [id]);
+        setShow(false);
+    });
 
     useEffect(() => {
-        update();
-    }, [update]);
+        update.current();
+    }, []);
+
     return {
         show,
         topActive,
